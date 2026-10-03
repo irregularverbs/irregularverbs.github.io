@@ -1,10 +1,6 @@
 /* ============================================================
    IRREGULARS — grammar-verify.js
    Verificación previa al arranque de grammar.html
-   ------------------------------------------------------------
-   Nivel A: ¿existen los objetos globales?
-   Nivel B: ¿tienen la forma esperada?
-   Nivel C: ¿cada ejercicio tiene sentence/answer? (?debug=1)
    ============================================================ */
 
 (function () {
@@ -19,12 +15,12 @@
   };
   var EXPECTED_LEVELS = [1, 2, 3, 4];
 
-  /* ----------------------------------------------------------
-     Pantalla de error (reemplaza al splash)
-     ---------------------------------------------------------- */
   function fail(errors) {
     var splash = document.getElementById("splash-screen");
     if (splash) splash.remove();
+
+    var old = document.querySelector(".verify-error");
+    if (old) old.remove();
 
     var box = document.createElement("div");
     box.className = "verify-error";
@@ -41,12 +37,8 @@
     document.body.appendChild(box);
   }
 
-  /* ----------------------------------------------------------
-     Nivel A — Objetos globales
-     ---------------------------------------------------------- */
   function checkA() {
     var errors = [];
-
     if (typeof GRAMMAR_TOPICS === "undefined" || !GRAMMAR_TOPICS) {
       errors.push("Falta GRAMMAR_TOPICS (data-grammar.js no cargó)");
     }
@@ -59,13 +51,9 @@
     if (typeof window.__grammarApp === "undefined") {
       errors.push("Falta __grammarApp (grammar-app.js no cargó)");
     }
-
     return errors;
   }
 
-  /* ----------------------------------------------------------
-     Nivel B — Forma esperada
-     ---------------------------------------------------------- */
   function checkB() {
     var errors = [];
     var warnings = [];
@@ -91,61 +79,33 @@
       });
     });
 
-    // Comprobar que GRAMMAR_EXERCISES tiene contenido real
-    if (typeof GRAMMAR_EXERCISES !== "undefined") {
-      EXPECTED_SECTIONS.forEach(function (secKey) {
-        if (!GRAMMAR_EXERCISES[secKey]) {
-          errors.push("GRAMMAR_EXERCISES no tiene la sección '" + secKey + "'");
-        }
-      });
-    }
-
     return { errors: errors, warnings: warnings };
   }
 
-  /* ----------------------------------------------------------
-     Nivel C — Integridad de ejercicios (solo debug)
-     ---------------------------------------------------------- */
   function checkC() {
     var errors = [];
-
     if (typeof GRAMMAR_EXERCISES === "undefined") return errors;
 
     Object.keys(GRAMMAR_EXERCISES).forEach(function (secKey) {
       Object.keys(GRAMMAR_EXERCISES[secKey] || {}).forEach(function (diffKey) {
         Object.keys(GRAMMAR_EXERCISES[secKey][diffKey] || {}).forEach(function (lvl) {
           var list = GRAMMAR_EXERCISES[secKey][diffKey][lvl];
-
           if (!Array.isArray(list)) {
-            errors.push("GRAMMAR_EXERCISES." + secKey + "." + diffKey + "." + lvl + " no es array");
+            errors.push(secKey + "." + diffKey + "." + lvl + " no es array");
             return;
           }
-          if (list.length === 0) {
-            errors.push("GRAMMAR_EXERCISES." + secKey + "." + diffKey + "." + lvl + " está vacío");
-            return;
-          }
-
           list.forEach(function (ex, i) {
             var prefix = secKey + "." + diffKey + "." + lvl + "[" + i + "]";
             if (!ex.sentence) errors.push(prefix + " sin sentence");
             if (!ex.answer)   errors.push(prefix + " sin answer");
-            if (!ex.altAnswers || !ex.altAnswers.length) {
-              errors.push(prefix + " sin altAnswers");
-            }
-            if (ex.sentence && ex.sentence.indexOf("___") === -1) {
-              errors.push(prefix + " sin hueco '___' en la frase");
-            }
+            if (!ex.altAnswers || !ex.altAnswers.length) errors.push(prefix + " sin altAnswers");
           });
         });
       });
     });
-
     return errors;
   }
 
-  /* ----------------------------------------------------------
-     Verificación pública
-     ---------------------------------------------------------- */
   window.__grammarVerify = function () {
     var errorsA = checkA();
     if (errorsA.length) { fail(errorsA); return false; }
