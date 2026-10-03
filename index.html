@@ -312,9 +312,45 @@
   <script src="app.js"></script>
 
   <script>
+    /* ============================================================
+       SERVICE WORKER — registro con auto-actualización forzada
+       ============================================================ */
     if ("serviceWorker" in navigator) {
-      window.addEventListener("load", () => {
-        navigator.serviceWorker.register("sw.js").catch(() => {});
+      window.addEventListener("load", function () {
+
+        // 1) Registrar el SW
+        navigator.serviceWorker.register("sw.js").then(function (reg) {
+
+          // 2) Forzar comprobación de actualización en cada carga
+          reg.update().catch(function () {});
+
+          // 3) Si hay un SW esperando (versión nueva instalada), activarlo YA
+          if (reg.waiting) {
+            reg.waiting.postMessage({ type: "SKIP_WAITING" });
+          }
+
+          // 4) Escuchar cambios: si se activa un SW nuevo, recargar UNA vez
+          reg.addEventListener("updatefound", function () {
+            var newWorker = reg.installing;
+            if (!newWorker) return;
+            newWorker.addEventListener("statechange", function () {
+              if (newWorker.state === "installed" && navigator.serviceWorker.controller) {
+                // Hay versión nueva lista → recargar
+                window.location.reload();
+              }
+            });
+          });
+        }).catch(function (err) {
+          console.warn("[IRREGULARS] SW register error:", err);
+        });
+
+        // 5) Cuando el controller cambia (SW nuevo toma el control), recargar UNA vez
+        var refreshing = false;
+        navigator.serviceWorker.addEventListener("controllerchange", function () {
+          if (refreshing) return;
+          refreshing = true;
+          window.location.reload();
+        });
       });
     }
   </script>
