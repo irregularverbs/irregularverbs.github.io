@@ -1,13 +1,6 @@
 /* ============================================================
    IRREGULARS — data-grammar.js
    Contenido real de gramática (A2 → B1+)
-   ------------------------------------------------------------
-   Cada tema declara:
-     - verbs:        verbos que se conjugan
-     - complements:  complementos por verbo (contexto real)
-     - times:        marcadores temporales típicos
-     - rules:        reglas que se muestran al fallar
-     - templates:    plantillas por nivel (1-4)
    ============================================================ */
 
 const GRAMMAR_TOPICS = {
@@ -21,7 +14,7 @@ const GRAMMAR_TOPICS = {
     icon: "📘",
 
     /* --------------------------------------------------------
-       🟢 FÁCIL — Present Simple + Present Continuous (A2)
+       FÁCIL — Present Simple + Present Continuous (A2)
        -------------------------------------------------------- */
     easy: {
       label: "Fácil",
@@ -30,16 +23,14 @@ const GRAMMAR_TOPICS = {
       description: "Present Simple (rutinas) y Present Continuous (acciones ahora).",
 
       rules: [
-        "Present Simple: 3ª persona singular → +s / +es (he work**s**, she go**es**)",
+        "Present Simple: 3ª persona singular → +s / +es (he works, she goes)",
         "Present Simple negativa: don't / doesn't + infinitivo",
         "Present Continuous: am / is / are + verbo-ing",
         "Contraste: I work every day · I am working right now"
       ],
 
-      // Verbos que se usan en esta dificultad
       verbs: ["work", "study", "live", "play", "read", "write", "eat", "drink", "speak", "watch"],
 
-      // Complementos contextuales por verbo
       complements: {
         work:  ["in an office", "from home", "at a hospital", "in a bank", "at a school"],
         study: ["English", "medicine", "at university", "every evening", "with friends"],
@@ -53,41 +44,21 @@ const GRAMMAR_TOPICS = {
         watch: ["TV", "films", "series", "the news"]
       },
 
-      // Marcadores temporales
       times: {
-        presentSimple:      ["every day", "on Mondays", "in the morning", "at weekends", "usually", "always", "often"],
-        presentContinuous:  ["now", "right now", "at the moment", "today", "this week", "tonight"]
+        presentSimple:     ["every day", "on Mondays", "in the morning", "at weekends", "usually", "always", "often"],
+        presentContinuous: ["now", "right now", "at the moment", "today", "this week", "tonight"]
       },
 
-      // Plantillas por nivel
       levels: {
-        1: {
-          label: "Afirmativas",
-          tenses: ["presentSimple", "presentContinuous"],
-          // Presente simple afirmativo: {S} {V} {C} {T}.
-          // Presente continuo afirmativo: {S} {AUX} {Ving} {C} {T}.
-          template: "affirmative"
-        },
-        2: {
-          label: "Negativas",
-          tenses: ["presentSimple", "presentContinuous"],
-          template: "negative"
-        },
-        3: {
-          label: "Preguntas",
-          tenses: ["presentSimple", "presentContinuous"],
-          template: "question"
-        },
-        4: {
-          label: "Contraste Simple/Continuous",
-          tenses: ["presentSimple", "presentContinuous"],
-          template: "mixed"
-        }
+        1: { label: "Afirmativas",                 tenses: ["presentSimple", "presentContinuous"], template: "affirmative" },
+        2: { label: "Negativas",                   tenses: ["presentSimple", "presentContinuous"], template: "negative" },
+        3: { label: "Preguntas",                   tenses: ["presentSimple", "presentContinuous"], template: "question" },
+        4: { label: "Contraste Simple/Continuous", tenses: ["presentSimple", "presentContinuous"], template: "mixed" }
       }
     },
 
     /* --------------------------------------------------------
-       🟡 MEDIO — Past Simple + Past Continuous (A2+)
+       MEDIO — Past Simple + Past Continuous (A2+)
        -------------------------------------------------------- */
     medium: {
       label: "Medio",
@@ -132,7 +103,7 @@ const GRAMMAR_TOPICS = {
     },
 
     /* --------------------------------------------------------
-       🟠 DIFÍCIL — Present Perfect (B1)
+       DIFÍCIL — Present Perfect (B1)
        -------------------------------------------------------- */
     hard: {
       label: "Difícil",
@@ -144,7 +115,7 @@ const GRAMMAR_TOPICS = {
         "Present Perfect: have / has + participio (3ª columna)",
         "Uso: experiencias sin tiempo específico, resultados presentes",
         "Marcadores: ever, never, already, yet, just, for, since",
-        "Contraste con Past Simple: I have seen him (sin fecha) · I saw him yesterday (con fecha)"
+        "Contraste: I have seen him (sin fecha) · I saw him yesterday (con fecha)"
       ],
 
       verbs: ["be", "have", "go", "see", "do", "eat", "write", "read", "meet", "visit"],
@@ -163,20 +134,19 @@ const GRAMMAR_TOPICS = {
       },
 
       times: {
-        presentPerfect: ["ever", "never", "already", "yet", "just", "this week", "this year", "recently"],
-        withForSince:   ["for five years", "since 2018", "for a long time", "since Monday"]
+        presentPerfect: ["ever", "never", "already", "yet", "just", "this week", "this year", "recently"]
       },
 
       levels: {
-        1: { label: "Afirmativas",            tenses: ["presentPerfect"], template: "affirmative" },
-        2: { label: "Negativas + ever/never", tenses: ["presentPerfect"], template: "negative" },
-        3: { label: "Preguntas + already/yet", tenses: ["presentPerfect"], template: "question" },
+        1: { label: "Afirmativas",               tenses: ["presentPerfect"], template: "affirmative" },
+        2: { label: "Negativas + ever/never",    tenses: ["presentPerfect"], template: "negative" },
+        3: { label: "Preguntas + already/yet",   tenses: ["presentPerfect"], template: "question" },
         4: { label: "Contraste con Past Simple", tenses: ["presentPerfect", "pastSimple"], template: "mixed" }
       }
     },
 
     /* --------------------------------------------------------
-       🔴 EXPERTO — Past Perfect + Mix (B1+)
+       EXPERTO — Past Perfect + Mix (B1+)
        -------------------------------------------------------- */
     expert: {
       label: "Experto",
@@ -185,7 +155,7 @@ const GRAMMAR_TOPICS = {
       description: "Anterioridad en el pasado y contraste de los 4 tiempos.",
 
       rules: [
-        "Past Perfect: had + participio (siempre igual para todas las personas)",
+        "Past Perfect: had + participio (igual para todas las personas)",
         "Uso: acción anterior a otra acción pasada",
         "Marcadores: before, after, already, by the time",
         "Ejemplo: When I arrived, the film had already started"
@@ -207,8 +177,7 @@ const GRAMMAR_TOPICS = {
       },
 
       times: {
-        pastPerfect: ["before", "already", "by the time", "after"],
-        mix:         ["yesterday", "last week", "now", "at the moment", "every day", "in 2019"]
+        pastPerfect: ["before", "already", "by the time", "after"]
       },
 
       levels: {
@@ -229,7 +198,7 @@ const GRAMMAR_TOPICS = {
     icon: "🔀",
 
     /* --------------------------------------------------------
-       🟢 FÁCIL — Condicional 0 (A2+)
+       FÁCIL — Condicional 0 (A2+)
        -------------------------------------------------------- */
     easy: {
       label: "Fácil",
@@ -240,26 +209,27 @@ const GRAMMAR_TOPICS = {
       rules: [
         "Estructura: If + presente simple, presente simple",
         "Uso: verdades generales, hechos científicos, rutinas",
-        "Ambas partes en presente simple",
         "Ejemplo: If it rains, the ground gets wet"
       ],
 
-      verbs: ["rain", "heat", "study", "eat", "sleep", "exercise", "read", "drink", "work", "speak"],
+      verbs: ["rain", "study", "eat", "sleep", "exercise", "read", "drink", "work", "speak", "play"],
 
       complements: {
         rain:     ["the ground gets wet", "we stay at home", "the plants grow"],
-        heat:     ["water boils", "ice melts", "the room gets hot"],
         study:    ["you pass the exam", "you learn faster", "you get better grades"],
         eat:      ["you feel better", "you have energy", "you are happy"],
         sleep:    ["you feel rested", "you have energy", "you think clearly"],
         exercise: ["you feel great", "you get stronger", "you sleep better"],
         read:     ["you learn a lot", "you improve your English", "you relax"],
-        drink:    ["water you feel better", "coffee you stay awake", "tea you relax"],
+        drink:    ["you feel better", "you stay awake", "you relax"],
         work:     ["hard you succeed", "in a team you learn", "every day you improve"],
-        speak:    ["English you improve", "slowly people understand", "clearly everyone listens"]
+        speak:    ["English you improve", "slowly people understand", "clearly everyone listens"],
+        play:     ["every day you improve", "with friends you have fun", "well you win"]
       },
 
-      times: { general: [""] }, // no usa marcadores temporales
+      times: {
+        general: [""]
+      },
 
       levels: {
         1: { label: "Afirmativas básicas", tenses: ["cond0"], template: "cond0" },
@@ -270,7 +240,7 @@ const GRAMMAR_TOPICS = {
     },
 
     /* --------------------------------------------------------
-       🟡 MEDIO — Condicional 1 (B1)
+       MEDIO — Condicional 1 (B1)
        -------------------------------------------------------- */
     medium: {
       label: "Medio",
@@ -300,7 +270,9 @@ const GRAMMAR_TOPICS = {
         miss:   ["you will regret it", "I will be sad", "we will miss you"]
       },
 
-      times: { future: [""] },
+      times: {
+        future: [""]
+      },
 
       levels: {
         1: { label: "If + presente, will + inf", tenses: ["cond1"], template: "cond1" },
@@ -311,7 +283,7 @@ const GRAMMAR_TOPICS = {
     },
 
     /* --------------------------------------------------------
-       🟠 DIFÍCIL — Condicional 2 (B1)
+       DIFÍCIL — Condicional 2 (B1)
        -------------------------------------------------------- */
     hard: {
       label: "Difícil",
@@ -326,22 +298,24 @@ const GRAMMAR_TOPICS = {
         "Ejemplo: If I had more time, I would learn guitar"
       ],
 
-      verbs: ["have", "be", "know", "can", "live", "go", "speak", "win", "find", "meet"],
+      verbs: ["have", "be", "know", "live", "go", "speak", "win", "find", "meet", "work"],
 
       complements: {
         have:  ["more time", "more money", "a car", "a bigger house"],
         be:    ["rich", "famous", "younger", "taller"],
         know:  ["the answer", "her name", "the truth", "the way"],
-        can:   ["fly", "travel the world", "speak five languages", "read minds"],
         live:  ["in Paris", "near the beach", "in another country", "abroad"],
         go:    ["to Japan", "around the world", "to that concert", "everywhere"],
         speak: ["Japanese", "five languages", "perfect English", "like a native"],
         win:   ["the lottery", "the competition", "a million euros", "the match"],
         find:  ["a treasure", "the perfect job", "a better solution", "the answer"],
-        meet:  ["a celebrity", "the president", "my idol", "interesting people"]
+        meet:  ["a celebrity", "the president", "my idol", "interesting people"],
+        work:  ["less", "from home", "in a dream company", "abroad"]
       },
 
-      times: { hypothetic: [""] },
+      times: {
+        hypothetic: [""]
+      },
 
       levels: {
         1: { label: "If + past, would + inf", tenses: ["cond2"], template: "cond2" },
@@ -352,7 +326,7 @@ const GRAMMAR_TOPICS = {
     },
 
     /* --------------------------------------------------------
-       🔴 EXPERTO — Condicional 3 (B1+)
+       EXPERTO — Condicional 3 (B1+)
        -------------------------------------------------------- */
     expert: {
       label: "Experto",
@@ -382,7 +356,9 @@ const GRAMMAR_TOPICS = {
         tell:   ["me", "the truth", "him earlier", "someone"]
       },
 
-      times: { pastHypothetic: [""] },
+      times: {
+        pastHypothetic: [""]
+      },
 
       levels: {
         1: { label: "If + past perfect, would have + pp", tenses: ["cond3"], template: "cond3" },
