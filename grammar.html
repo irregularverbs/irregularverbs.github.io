@@ -22,6 +22,9 @@
 
 <body class="app-body">
 
+  <!-- ============================================================
+       SPLASH
+       ============================================================ -->
   <div id="splash-screen" class="splash" aria-hidden="true">
     <div class="splash__logo-wrap">
       <div class="splash__glow"></div>
@@ -34,6 +37,9 @@
     </div>
   </div>
 
+  <!-- ============================================================
+       HEADER
+       ============================================================ -->
   <header class="app-header">
     <a href="index.html" class="brand grammar-back" aria-label="Volver a verbos">
       <span class="brand__logo">Ir</span>
@@ -69,8 +75,14 @@
     </nav>
   </header>
 
+  <!-- ============================================================
+       MAIN
+       ============================================================ -->
   <main class="app-main">
 
+    <!-- --------------------------------------------------------
+         VISTA: HOME / CONFIGURACIÓN
+         -------------------------------------------------------- -->
     <section id="view-home" class="view view--home is-visible">
       <div class="banner">
         <span class="banner__badge">A2 → B1+</span>
@@ -78,6 +90,7 @@
         <p class="banner__text">Tiempos verbales y condicionales con ejercicios contextuales. De cero a B1+.</p>
       </div>
 
+      <!-- PASO 1: Sección -->
       <section class="block">
         <header class="block__head">
           <h3 class="block__title"><span class="block__step">1</span> Sección</h3>
@@ -86,21 +99,17 @@
           <button type="button" class="section-card is-active" data-section="tenses">
             <span class="section-card__icon">📘</span>
             <span class="section-card__title">Tiempos Verbales</span>
-            <span class="section-card__desc">Present, Past, Perfect y contrastes.</span>
+            <span class="section-card__desc">Present, Past, Perfect y sus contrastes.</span>
           </button>
           <button type="button" class="section-card" data-section="conditionals">
             <span class="section-card__icon">🔀</span>
             <span class="section-card__title">Condicionales</span>
             <span class="section-card__desc">Del tipo 0 al tipo 3.</span>
           </button>
-          <button type="button" class="section-card" data-section="mastery">
-            <span class="section-card__icon">👑</span>
-            <span class="section-card__title">Maestría Global</span>
-            <span class="section-card__desc">Examen final: todo mezclado.</span>
-          </button>
         </div>
       </section>
 
+      <!-- PASO 2: Dificultad -->
       <section class="block">
         <header class="block__head">
           <h3 class="block__title"><span class="block__step">2</span> Dificultad</h3>
@@ -109,6 +118,7 @@
         <div class="difficulty-grid" id="difficulty-grid"></div>
       </section>
 
+      <!-- PASO 3: Nivel -->
       <section class="block">
         <header class="block__head">
           <h3 class="block__title"><span class="block__step">3</span> Nivel</h3>
@@ -117,11 +127,12 @@
         <div class="chips" id="level-chips"></div>
       </section>
 
+      <!-- PASO 4: Cantidad -->
       <section class="block">
         <header class="block__head">
           <h3 class="block__title"><span class="block__step">4</span> Cantidad</h3>
         </header>
-        <div class="chips">
+        <div class="chips" id="limit-chips">
           <button type="button" class="chip limit-btn" data-limit="10">10</button>
           <button type="button" class="chip limit-btn is-active" data-limit="25">25</button>
           <button type="button" class="chip limit-btn" data-limit="50">50</button>
@@ -129,6 +140,7 @@
         </div>
       </section>
 
+      <!-- PASO 5: Reglas del tema -->
       <section class="block">
         <div class="rules-panel" id="rules-panel">
           <div class="rules-panel__head">
@@ -140,6 +152,7 @@
         </div>
       </section>
 
+      <!-- Botón comenzar -->
       <button type="button" class="btn btn--primary btn--lg" id="start-session-btn">
         <span>Comenzar sesión</span>
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -149,6 +162,9 @@
       </button>
     </section>
 
+    <!-- --------------------------------------------------------
+         VISTA: ESTUDIO
+         -------------------------------------------------------- -->
     <section id="view-study" class="view view--study">
       <div class="study-bar">
         <button type="button" class="btn btn--ghost" id="exit-session-btn">
@@ -171,6 +187,7 @@
         <div id="flashcard" class="flashcard">
           <div class="flashcard__inner">
 
+            <!-- CARA FRONTAL -->
             <div class="flashcard__face flashcard__face--front">
               <header class="flashcard__head">
                 <span id="card-type-badge" class="badge badge--type">Gramática</span>
@@ -187,6 +204,7 @@
               </form>
             </div>
 
+            <!-- CARA TRASERA (mini-lección) -->
             <div class="flashcard__face flashcard__face--back">
               <header class="flashcard__head">
                 <span class="badge badge--fail">¡Fallo!</span>
@@ -200,15 +218,15 @@
                 </div>
                 <div class="lesson__rows">
                   <div class="lesson__row">
-                    <span class="lesson__k">Regla</span>
+                    <span class="lesson__k">Tiempo</span>
                     <span id="mini-base" class="lesson__v">—</span>
                   </div>
                   <div class="lesson__row">
-                    <span class="lesson__k">Tiempo</span>
+                    <span class="lesson__k">Respuesta</span>
                     <span id="mini-past" class="lesson__v lesson__v--past">—</span>
                   </div>
                   <div class="lesson__row">
-                    <span class="lesson__k">Estructura</span>
+                    <span class="lesson__k">Regla</span>
                     <span id="mini-part" class="lesson__v lesson__v--part">—</span>
                   </div>
                 </div>
@@ -224,6 +242,9 @@
       </div>
     </section>
 
+    <!-- --------------------------------------------------------
+         VISTA: ESTADÍSTICAS
+         -------------------------------------------------------- -->
     <section id="view-stats" class="view view--stats">
       <div class="stats-head">
         <div>
@@ -254,15 +275,17 @@
 
       <div class="panel">
         <h3 class="panel__title">Progreso por dificultad</h3>
+
         <div class="progress-row">
           <div class="progress-row__head">
             <span>🟢 Fácil</span>
-            <span id="prog-high" class="progress-row__pct">0%</span>
+            <span id="prog-easy" class="progress-row__pct">0%</span>
           </div>
           <div class="progress">
-            <div id="bar-high" class="progress__fill progress__fill--high"></div>
+            <div id="bar-easy" class="progress__fill progress__fill--high"></div>
           </div>
         </div>
+
         <div class="progress-row">
           <div class="progress-row__head">
             <span>🟡 Medio</span>
@@ -272,13 +295,24 @@
             <div id="bar-medium" class="progress__fill progress__fill--medium"></div>
           </div>
         </div>
+
         <div class="progress-row">
           <div class="progress-row__head">
             <span>🟠 Difícil</span>
-            <span id="prog-low" class="progress-row__pct">0%</span>
+            <span id="prog-hard" class="progress-row__pct">0%</span>
           </div>
           <div class="progress">
-            <div id="bar-low" class="progress__fill progress__fill--low"></div>
+            <div id="bar-hard" class="progress__fill progress__fill--low"></div>
+          </div>
+        </div>
+
+        <div class="progress-row">
+          <div class="progress-row__head">
+            <span>🔴 Experto</span>
+            <span id="prog-expert" class="progress-row__pct">0%</span>
+          </div>
+          <div class="progress">
+            <div id="bar-expert" class="progress__fill progress__fill--low"></div>
           </div>
         </div>
       </div>
@@ -286,6 +320,9 @@
 
   </main>
 
+  <!-- ============================================================
+       TOAST
+       ============================================================ -->
   <div id="toast" class="toast" role="status" aria-live="polite">
     <div id="toast-content" class="toast__content">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
@@ -295,6 +332,9 @@
     </div>
   </div>
 
+  <!-- ============================================================
+       SCRIPTS
+       ============================================================ -->
   <script src="data-verbs.js"></script>
   <script src="data-grammar.js"></script>
   <script src="grammar-generator.js"></script>
