@@ -1118,3 +1118,56 @@ body::before {
     transition-duration: 0.001ms !important;
   }
 }
+
+/* ------------------------------------------------------------
+   19. BANNER DUO (index: verbos + gramática)
+   ------------------------------------------------------------ */
+
+.banner-duo {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s-3);
+  margin-bottom: var(--s-7);
+}
+
+@media (max-width: 640px) {
+  .banner-duo { grid-template-columns: 1fr; }
+}
+
+/* El .banner original ahora es hijo del grid → quitamos su margin-bottom */
+.banner-duo .banner {
+  margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  text-decoration: none;
+  color: inherit;
+  transition: border-color var(--t-fast), transform var(--t-fast);
+}
+
+.banner--link {
+  cursor: pointer;
+}
+
+.banner--link:hover {
+  border-color: rgba(99, 102, 241, 0.4);
+  transform: translateY(-2px);
+}
+
+.banner--link.is-current {
+  /* El que estás viendo: mismo estilo pero con un toque distintivo */
+  border-color: rgba(99, 102, 241, 0.25);
+}
+
+.banner__cta {
+  margin-top: auto;
+  padding-top: var(--s-4);
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--accent-2);
+  letter-spacing: -0.005em;
+}
+
+.banner__cta--current {
+  color: var(--text-4);
+  font-weight: 600;
+}
