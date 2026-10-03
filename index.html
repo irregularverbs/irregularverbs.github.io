@@ -13,6 +13,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
   <meta name="apple-mobile-web-app-title" content="IRREGULARS" />
+  <link rel="icon" type="image/png" href="icons/icon-192.png" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
 
   <!-- Tipografías -->
@@ -406,8 +407,20 @@
   <script src="app.js"></script>
 
   <script>
+    /* Respaldo: evita que la pantalla de carga quede fija si falla un script. */
+    window.setTimeout(() => {
+      document.getElementById("splash-screen")?.remove();
+    }, 2500);
+
     /* Registro del Service Worker (PWA) */
     if ("serviceWorker" in navigator) {
+      let reloadingForWorkerUpdate = false;
+      navigator.serviceWorker.addEventListener("controllerchange", () => {
+        if (reloadingForWorkerUpdate) return;
+        reloadingForWorkerUpdate = true;
+        window.location.reload();
+      });
+
       window.addEventListener("load", () => {
         navigator.serviceWorker
           .register("sw.js")
