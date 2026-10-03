@@ -59,6 +59,19 @@
           "type": "image/svg+xml"
         }
       ]
+    },
+    {
+      "name": "Gramática",
+      "short_name": "Gramática",
+      "description": "Tiempos verbales y condicionales A2 → B1+",
+      "url": "./grammar.html",
+      "icons": [
+        {
+          "src": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA5NiA5NiI+PGRlZnM+PGxpbmVhckdyYWRpZW50IGlkPSJnIiB4MT0iMCUiIHkxPSIwJSIgeDI9IjEwMCUiIHkyPSIxMDAlIj48c3RvcCBvZmZzZXQ9IjAlIiBzdG9wLWNvbG9yPSIjNjM2NmYxIi8+PHN0b3Agb2Zmc2V0PSIxMDAlIiBzdG9wLWNvbG9yPSIjOGI1Y2Y2Ii8+PC9saW5lYXJHcmFkaWVudD48L2RlZnM+PHJlY3Qgd2lkdGg9Ijk2IiBoZWlnaHQ9Ijk2IiByeD0iMjAiIGZpbGw9IiMwYTBhMGMiLz48cmVjdCB4PSIxMCIgeT0iMTAiIHdpZHRoPSI3NiIgaGVpZ2h0PSI3NiIgcng9IjE4IiBmaWxsPSJ1cmwoI2cpIi8+PHRleHQgeD0iNDgiIHk9IjY0IiBmb250LWZhbWlseT0iSmV0QnJhaW5zIE1vbm8sIFNGTW9uby1SZWd1bGFyLCBDb3VyaWVyLCBtb25vc3BhY2UiIGZvbnQtc2l6ZT0iNDAiIGZvbnQtd2VpZ2h0PSI4MDAiIGZpbGw9IiNmZmZmZmYiIHRleHQtYW5jaG9yPSJtaWRkbGUiPkdyPC90ZXh0Pjwvc3ZnPg==",
+          "sizes": "96x96",
+          "type": "image/svg+xml"
+        }
+      ]
     }
   ]
 }
