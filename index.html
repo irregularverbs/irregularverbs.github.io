@@ -3,55 +3,320 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>IRREGULARS — Verbos irregulares</title>
+  <title>IRREGULARS — Verbos irregulares en inglés</title>
+  <meta name="description" content="Aprende los verbos irregulares en inglés con más de 5.000 ejercicios contextuales." />
+
+  <link rel="manifest" href="manifest.json" />
   <meta name="theme-color" content="#0a0a0c" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="IRREGULARS" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
   <link rel="stylesheet" href="styles.css" />
 </head>
+
 <body class="app-body">
 
-  <div id="splash-screen" class="splash">
-    <div style="text-align:center; max-width: 90vw;">
-      <h1 style="font-size: 24px; font-weight: 800; margin-bottom: 20px;">IRREGULARS</h1>
-      <div id="diag" style="font-family: monospace; font-size: 13px; color: #b9b9c4; line-height: 1.8; text-align: left; display: inline-block;">
-        <div>· cargando…</div>
-      </div>
-      <p id="diag-detail" style="margin-top: 16px; font-size: 11px; color: #7a7a89; word-break: break-all;"></p>
+  <div id="splash-screen" class="splash" aria-hidden="true">
+    <div class="splash__logo-wrap">
+      <div class="splash__glow"></div>
+      <div class="splash__logo"><span>Ir</span></div>
+    </div>
+    <h1 class="splash__title">IRREGULARS</h1>
+    <p class="splash__subtitle">Domina los verbos irregulares</p>
+    <div class="splash__bar">
+      <div id="splash-progress" class="splash__bar-fill"></div>
     </div>
   </div>
 
-  <script>
-    // Sistema de diagnóstico visual
-    const diag = document.getElementById("diag");
-    const detail = document.getElementById("diag-detail");
-    const lines = [];
+  <header class="app-header">
+    <button type="button" class="brand" aria-label="Ir al inicio">
+      <span class="brand__logo">Ir</span>
+      <span class="brand__text">
+        <span class="brand__name">IRREGULARS</span>
+        <span class="brand__tag">PWA · Offline</span>
+      </span>
+    </button>
 
-    function log(name, ok, err) {
-      const mark = ok ? "[✓]" : "[✗]";
-      const color = ok ? "#10b981" : "#ef4444";
-      lines.push('<div style="color:' + color + '">' + mark + ' ' + name + '</div>');
-      diag.innerHTML = lines.join("");
-      if (err) detail.textContent = String(err);
+    <nav class="topnav" aria-label="Navegación principal">
+      <button type="button" id="nav-home" class="topnav__btn is-active">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M3 12l2-2 7-7 7 7 2 2" />
+          <path d="M5 10v10a1 1 0 0 0 1 1h3m10-11v10a1 1 0 0 1-1 1h-3m-6 0a1 1 0 0 0 1-1v-4a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v4a1 1 0 0 0 1 1m-6 0h6" />
+        </svg>
+        <span>Estudio</span>
+      </button>
+
+      <button type="button" id="nav-stats" class="topnav__btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M9 19v-6a2 2 0 0 0-2-2H5a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2z" />
+          <path d="M9 19V9a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v10" />
+          <path d="M9 19a2 2 0 0 0 2 2h2a2 2 0 0 0 2-2m0 0V5a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-2a2 2 0 0 1-2-2z" />
+        </svg>
+        <span>Estadísticas</span>
+      </button>
+
+      <button type="button" id="install-btn" class="topnav__btn topnav__btn--install" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M4 16v1a3 3 0 0 0 3 3h10a3 3 0 0 0 3-3v-1" />
+          <path d="M12 4v12" />
+          <path d="M8 12l4 4 4-4" />
+        </svg>
+        <span>Instalar</span>
+      </button>
+    </nav>
+  </header>
+
+  <main class="app-main">
+
+    <section id="view-home" class="view view--home is-visible">
+      <div class="banner">
+        <span class="banner__badge">+5.000 ejercicios únicos</span>
+        <h2 class="banner__title">Domina los verbos irregulares</h2>
+        <p class="banner__text">Frases contextuales, repaso adaptativo y práctica hasta acertar.</p>
+      </div>
+
+      <section class="block">
+        <header class="block__head">
+          <h3 class="block__title"><span class="block__step">1</span> Prioridad</h3>
+          <span id="selected-priority-label" class="block__value">Alta</span>
+        </header>
+
+        <div class="grid grid--4 grid--priority">
+          <button type="button" id="p-high" class="tile tile--priority is-active">
+            <span class="dot dot--high"></span>
+            <span class="tile__title">Alta</span>
+            <span class="tile__meta">30 esenciales</span>
+          </button>
+          <button type="button" id="p-medium" class="tile tile--priority">
+            <span class="dot dot--medium"></span>
+            <span class="tile__title">Media</span>
+            <span class="tile__meta">22 frecuentes</span>
+          </button>
+          <button type="button" id="p-low" class="tile tile--priority">
+            <span class="dot dot--low"></span>
+            <span class="tile__title">Baja</span>
+            <span class="tile__meta">28 avanzados</span>
+          </button>
+          <button type="button" id="p-all" class="tile tile--priority tile--fire">
+            <span class="dot dot--fire"></span>
+            <span class="tile__title">Todo 🔥</span>
+            <span class="tile__meta">Incluye muy baja</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="block">
+        <header class="block__head">
+          <h3 class="block__title"><span class="block__step">2</span> Modo de estudio</h3>
+          <span id="selected-mode-label" class="block__value">2 Columnas</span>
+        </header>
+
+        <div class="grid grid--3 grid--mode">
+          <button type="button" id="m-2col" class="tile tile--mode is-active">
+            <span class="tile__title">2 Columnas</span>
+            <span class="tile__meta">Infinitivo → Pasado</span>
+            <span class="tile__hint">Practica la 2ª forma verbal</span>
+          </button>
+          <button type="button" id="m-3col" class="tile tile--mode">
+            <span class="tile__title">3 Columnas</span>
+            <span class="tile__meta">Infinitivo → Participio</span>
+            <span class="tile__hint">Practica la 3ª forma verbal</span>
+          </button>
+          <button type="button" id="m-both" class="tile tile--mode tile--fire">
+            <span class="tile__title">Las Dos 🔥</span>
+            <span class="tile__meta">Pasado + Participio</span>
+            <span class="tile__hint">Mezcla adaptada a tus fallos</span>
+          </button>
+        </div>
+      </section>
+
+      <section class="block">
+        <header class="block__head">
+          <h3 class="block__title"><span class="block__step">3</span> Cantidad de ejercicios</h3>
+        </header>
+
+        <div class="chips">
+          <button type="button" class="chip limit-btn" data-limit="10">10</button>
+          <button type="button" class="chip limit-btn is-active" data-limit="25">25</button>
+          <button type="button" class="chip limit-btn" data-limit="50">50</button>
+          <button type="button" class="chip limit-btn" data-limit="100">100</button>
+          <button type="button" class="chip limit-btn" data-limit="0">Sin límite</button>
+        </div>
+      </section>
+
+      <button type="button" class="btn btn--primary btn--lg" id="start-session-btn">
+        <span>Comenzar sesión</span>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M5 12h14" />
+          <path d="M13 5l7 7-7 7" />
+        </svg>
+      </button>
+    </section>
+
+    <section id="view-study" class="view view--study">
+      <div class="study-bar">
+        <button type="button" class="btn btn--ghost" id="exit-session-btn">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M19 12H5" />
+            <path d="M12 19l-7-7 7-7" />
+          </svg>
+          <span>Salir</span>
+        </button>
+
+        <div class="study-bar__progress">
+          <span id="session-counter" class="study-bar__count">1 / 25</span>
+          <div class="progress">
+            <div id="session-progress-bar" class="progress__fill"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="flashcard-stage">
+        <div id="flashcard" class="flashcard">
+          <div class="flashcard__inner">
+
+            <div class="flashcard__face flashcard__face--front">
+              <header class="flashcard__head">
+                <span id="card-type-badge" class="badge badge--type">Pasado</span>
+                <span id="card-verb-hint" class="flashcard__hint">verbo: go</span>
+              </header>
+
+              <p id="card-sentence" class="flashcard__sentence">
+                I ___ (go) to school yesterday.
+              </p>
+
+              <form id="answer-form" class="answer" autocomplete="off">
+                <input id="answer-input" class="answer__input" type="text" placeholder="Escribe la respuesta…" spellcheck="false" autocapitalize="none" autocorrect="off" inputmode="text" />
+                <button type="submit" class="btn btn--primary btn--block">Comprobar</button>
+              </form>
+            </div>
+
+            <div class="flashcard__face flashcard__face--back">
+              <header class="flashcard__head">
+                <span class="badge badge--fail">¡Fallo!</span>
+                <span id="feedback-correct-word" class="flashcard__hint flashcard__hint--fail">Respuesta: WENT</span>
+              </header>
+
+              <div class="lesson">
+                <div class="lesson__title">
+                  <span id="mini-verb-title" class="lesson__verb">GO</span>
+                  <span id="mini-verb-es" class="lesson__es">ir</span>
+                </div>
+                <div class="lesson__rows">
+                  <div class="lesson__row">
+                    <span class="lesson__k">Infinitivo</span>
+                    <span id="mini-base" class="lesson__v">go</span>
+                  </div>
+                  <div class="lesson__row">
+                    <span class="lesson__k">Pasado</span>
+                    <span id="mini-past" class="lesson__v lesson__v--past">went</span>
+                  </div>
+                  <div class="lesson__row">
+                    <span class="lesson__k">Participio</span>
+                    <span id="mini-part" class="lesson__v lesson__v--part">gone</span>
+                  </div>
+                </div>
+              </div>
+
+              <button type="button" class="btn btn--ghost btn--block" id="next-card-btn">
+                Continuar practicando ↵
+              </button>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="view-stats" class="view view--stats">
+      <div class="stats-head">
+        <div>
+          <h2 class="stats-head__title">Estadísticas</h2>
+          <p class="stats-head__subtitle">Tu progreso se guarda en este dispositivo.</p>
+        </div>
+        <button type="button" class="btn btn--danger" id="reset-stats-btn">Reiniciar datos</button>
+      </div>
+
+      <div class="grid grid--4 grid--metrics">
+        <div class="metric">
+          <span class="metric__k">Ejercicios</span>
+          <span id="stat-total" class="metric__v">0</span>
+        </div>
+        <div class="metric">
+          <span class="metric__k">Aciertos</span>
+          <span id="stat-accuracy" class="metric__v metric__v--ok">0%</span>
+        </div>
+        <div class="metric">
+          <span class="metric__k">Racha actual</span>
+          <span id="stat-streak" class="metric__v metric__v--warn">0</span>
+        </div>
+        <div class="metric">
+          <span class="metric__k">Mejor racha</span>
+          <span id="stat-best-streak" class="metric__v metric__v--info">0</span>
+        </div>
+      </div>
+
+      <div class="panel">
+        <h3 class="panel__title">Progreso por prioridad</h3>
+
+        <div class="progress-row">
+          <div class="progress-row__head">
+            <span>🟢 Alta</span>
+            <span id="prog-high" class="progress-row__pct">0%</span>
+          </div>
+          <div class="progress">
+            <div id="bar-high" class="progress__fill progress__fill--high"></div>
+          </div>
+        </div>
+
+        <div class="progress-row">
+          <div class="progress-row__head">
+            <span>🟡 Media</span>
+            <span id="prog-medium" class="progress-row__pct">0%</span>
+          </div>
+          <div class="progress">
+            <div id="bar-medium" class="progress__fill progress__fill--medium"></div>
+          </div>
+        </div>
+
+        <div class="progress-row">
+          <div class="progress-row__head">
+            <span>🟠 Baja</span>
+            <span id="prog-low" class="progress-row__pct">0%</span>
+          </div>
+          <div class="progress">
+            <div id="bar-low" class="progress__fill progress__fill--low"></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite">
+    <div id="toast-content" class="toast__content">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M5 13l4 4L19 7" />
+      </svg>
+      <span id="toast-msg">¡Correcto!</span>
+    </div>
+  </div>
+
+  <script src="data-verbs.js"></script>
+  <script src="data-generator.js"></script>
+  <script src="app.js"></script>
+
+  <script>
+    if ("serviceWorker" in navigator) {
+      window.addEventListener("load", () => {
+        navigator.serviceWorker.register("sw.js").catch(() => {});
+      });
     }
-
-    window.addEventListener("error", function (e) {
-      detail.textContent = "ERROR: " + (e.message || "desconocido") + " — " + (e.filename || "");
-    });
-
-    // 1. HTML
-    log("index.html", true);
-  </script>
-
-  <script src="data-verbs.js" onload="log('data-verbs.js', typeof IRREGULAR_VERBS !== 'undefined', typeof IRREGULAR_VERBS === 'undefined' ? 'IRREGULAR_VERBS no definido' : '')" onerror="log('data-verbs.js', false, 'no se pudo cargar')"></script>
-
-  <script src="data-generator.js" onload="log('data-generator.js', typeof ALL_EXERCISES !== 'undefined', typeof ALL_EXERCISES === 'undefined' ? 'ALL_EXERCISES no definido' : (ALL_EXERCISES.length + ' ejercicios'))" onerror="log('data-generator.js', false, 'no se pudo cargar')"></script>
-
-  <script src="app.js" onload="log('app.js', typeof IrregularsApp !== 'undefined', typeof IrregularsApp === 'undefined' ? 'IrregularsApp no definido' : '')" onerror="log('app.js', false, 'no se pudo cargar')"></script>
-
-  <script>
-    log("app.init()", typeof app !== "undefined" && typeof app.init === "function");
-
-    // Si todo ha ido bien, redirigir a la app normal
-    // (aquí NO redirigimos: mostramos el diagnóstico)
   </script>
 
 </body>
