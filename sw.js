@@ -14,7 +14,7 @@
    Cambia VERSION cada vez que modifiques app.js, styles.css o
    cualquier archivo del app shell para forzar la actualización.
    ------------------------------------------------------------ */
-const VERSION = "irregulars-v1.0.0";
+const VERSION = "irregulars-v1.0.2";
 const CACHE_STATIC  = `${VERSION}-static`;
 const CACHE_RUNTIME = `${VERSION}-runtime`;
 const CACHE_FONTS   = `${VERSION}-fonts`;
@@ -28,7 +28,8 @@ const PRECACHE_URLS = [
   "./app.js",
   "./data-verbs.js",
   "./data-generator.js",
-  "./manifest.json"
+  "./manifest.json",
+  "./icons/icon-192.png"
 ];
 
 /* Dominios cuyas fuentes se cachean con stale-while-revalidate. */
