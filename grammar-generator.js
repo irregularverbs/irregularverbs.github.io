@@ -1,18 +1,11 @@
 /* ============================================================
    IRREGULARS — grammar-generator.js
    Genera ejercicios de gramática desde GRAMMAR_TOPICS.
-   ------------------------------------------------------------
-   - Condicionales: hueco puede estar en el "if" o en el resultado.
-   - Tiempos: hueco en el verbo principal.
-   - ~100 ejercicios por combinación dificultad × nivel.
    ============================================================ */
 
 (function () {
   "use strict";
 
-  /* ----------------------------------------------------------
-     Sujetos organizados por persona gramatical
-     ---------------------------------------------------------- */
   var SUBJECTS = {
     first_singular:   ["I"],
     second_singular:  ["You"],
@@ -36,10 +29,6 @@
     return s.charAt(0).toUpperCase() + s.slice(1);
   }
 
-  /* ----------------------------------------------------------
-     Reglas de conjugación reutilizables
-     ---------------------------------------------------------- */
-
   function thirdPerson(base) {
     if (/(s|sh|ch|x|o)$/.test(base))   return base + "es";
     if (/[^aeiou]y$/.test(base))       return base.slice(0, -1) + "ies";
@@ -55,7 +44,6 @@
   function pastRegular(base) {
     if (/e$/.test(base))               return base + "d";
     if (/[^aeiou]y$/.test(base))       return base.slice(0, -1) + "ied";
-    // Doblar consonante final en verbos cortos CVC
     if (/[^aeiou][aeiou][^aeiouwxy]$/.test(base) && base.length <= 4) {
       return base + base.slice(-1) + "ed";
     }
@@ -75,8 +63,8 @@
   }
 
   function beFor(subj) {
-    if (subj === "I")                          return "am";
-    if (isThirdSingular(subj))                 return "is";
+    if (subj === "I")          return "am";
+    if (isThirdSingular(subj)) return "is";
     return "are";
   }
 
@@ -88,10 +76,6 @@
   function haveHasFor(subj) {
     return isThirdSingular(subj) ? "has" : "have";
   }
-
-  /* ----------------------------------------------------------
-     Conjugadores por tiempo (devuelven solo la forma verbal)
-     ---------------------------------------------------------- */
 
   function conjPresentSimple(verb, subj) {
     return isThirdSingular(subj) ? thirdPerson(verb) : verb;
@@ -129,9 +113,6 @@
     }
   }
 
-  /* ----------------------------------------------------------
-     Etiquetas
-     ---------------------------------------------------------- */
   var TENSE_LABELS = {
     presentSimple:     "Present Simple",
     presentContinuous: "Present Continuous",
@@ -141,9 +122,7 @@
     pastPerfect:       "Past Perfect"
   };
 
-  /* ==========================================================
-     CONSTRUCTOR DE FRASES — TIEMPOS VERBALES
-     ========================================================== */
+  /* ---------- TIEMPOS VERBALES ---------- */
   function buildStandard(topic, level, tense, subj, verb, comp, time, seed) {
     var tpl = level.template;
     var timeStr = time ? " " + time : "";
@@ -151,10 +130,8 @@
 
     switch (tpl) {
 
-      /* ---------- AFIRMATIVAS ---------- */
       case "affirmative": {
         if (tense === "presentContinuous" || tense === "pastContinuous") {
-          // El auxiliar ya va fuera del hueco: "She is ___ (work) here."
           var aux = tense === "presentContinuous" ? beFor(subj) : wasWereFor(subj);
           return {
             sentence: subj + " " + aux + " ___ (" + verb + ") " + comp + timeStr + ".",
@@ -177,7 +154,6 @@
         };
       }
 
-      /* ---------- NEGATIVAS ---------- */
       case "negative": {
         if (tense === "presentContinuous" || tense === "pastContinuous") {
           var auxN = tense === "presentContinuous" ? (beFor(subj) + " not") : (wasWereFor(subj) + " not");
@@ -204,7 +180,6 @@
         };
       }
 
-      /* ---------- PREGUNTAS ---------- */
       case "question": {
         if (tense === "presentContinuous" || tense === "pastContinuous") {
           var auxQ = tense === "presentContinuous" ? beFor(subj) : wasWereFor(subj);
@@ -231,7 +206,6 @@
         };
       }
 
-      /* ---------- MIXED ---------- */
       case "mixed": {
         var r = seed % 3;
         var tplMap = ["affirmative", "negative", "question"];
@@ -248,78 +222,21 @@
     }
   }
 
-  /* ==========================================================
-     CONSTRUCTOR DE FRASES — CONDICIONALES (COMPLETO)
-     ==========================================================
-     Cada ejercicio tiene DOS partes:
-       A) la parte del "if"
-       B) la parte del resultado
-     El hueco (___) puede estar en A o en B. Se decide por seed.
-     ========================================================== */
-
-  /* Frases-resultado por defecto cuando no encaja un complemento */
-  var COND_RESULTS = [
-    "the ground gets wet",
-    "things would be different",
-    "we would have had fun",
-    "I would be happy",
-    "everyone would be surprised",
-    "she would travel the world",
-    "I would have told you",
-    "we will have a great time",
-    "I will stay at home",
-    "we would still be friends",
-    "everything would have been fine",
-    "you would feel better"
-  ];
-
-  function buildCondPartA(verb, subj, tense) {
-    // Devuelve la forma correcta para el "if"
-    return conjByTense(tense, verb, subj);
-  }
-
-  function buildCondPartB_Will(verb, subj) {
-    return "will " + verb;
-  }
-
-  function buildCondPartB_Would(verb, subj) {
-    return "would " + verb;
-  }
-
-  function buildCondPartB_WouldHave(verb, subj) {
-    return "would have " + participleForm(verb);
-  }
-
-  function pickResult(seed, compFallback) {
-    // Si el complemento del data-grammar parece una frase completa, se usa.
-    // Si no, se usa una frase genérica del banco.
-    if (compFallback && compFallback.split(" ").length >= 3) return compFallback;
-    return pick(COND_RESULTS, seed);
-  }
-
+  /* ---------- CONDICIONALES ---------- */
   function buildConditional(topic, level, subj, verb, comp, template, seed) {
     var subjLow = subj.toLowerCase();
-    var result = pickResult(seed, comp);
-
-    // Generamos la forma correcta en cada parte
-    var partA_present    = conjPresentSimple(verb, subj);
-    var partA_past       = conjPastSimple(verb, subj);
-    var partA_pastPerf   = conjPastPerfect(verb, subj);
-    var partB_will       = "will " + verb;
-    var partB_would      = "would " + verb;
-    var partB_wouldHave  = "would have " + participleForm(verb);
-
-    // Decidir dónde va el hueco: 0 = if, 1 = result
+    var partA_present  = conjPresentSimple(verb, subj);
+    var partA_past     = conjPastSimple(verb, subj);
+    var partA_pastPerf = conjPastPerfect(verb, subj);
+    var partB_wouldHave = "would have " + participleForm(verb);
     var hole = seed % 2;
 
     switch (template) {
 
-      /* ================= COND 0 ================= */
       case "cond0": {
-        // If + present, present.
         if (hole === 0) {
           return {
-            sentence: "If " + subjLow + " ___ (" + verb + "), " + result + ".",
+            sentence: "If " + subjLow + " ___ (" + verb + "), " + comp + ".",
             answer: partA_present,
             altAnswers: [partA_present]
           };
@@ -334,7 +251,7 @@
       case "cond0neg": {
         var negA = isThirdSingular(subj) ? "doesn't" : "don't";
         return {
-          sentence: "If " + subjLow + " " + negA + " ___ (" + verb + "), " + result + ".",
+          sentence: "If " + subjLow + " " + negA + " ___ (" + verb + "), " + comp + ".",
           answer: verb,
           altAnswers: [verb]
         };
@@ -352,12 +269,10 @@
         return buildConditional(topic, level, subj, verb, comp,
                                 seed % 2 === 0 ? "cond0" : "cond0neg", seed);
 
-      /* ================= COND 1 ================= */
       case "cond1": {
-        // If + present simple, will + inf.
         if (hole === 0) {
           return {
-            sentence: "If " + subjLow + " ___ (" + verb + "), " + result + ".",
+            sentence: "If " + subjLow + " ___ (" + verb + "), " + comp + ".",
             answer: partA_present,
             altAnswers: [partA_present]
           };
@@ -372,7 +287,7 @@
       case "cond1neg": {
         var negA1 = isThirdSingular(subj) ? "doesn't" : "don't";
         return {
-          sentence: "If " + subjLow + " " + negA1 + " ___ (" + verb + "), " + result + ".",
+          sentence: "If " + subjLow + " " + negA1 + " ___ (" + verb + "), " + comp + ".",
           answer: verb,
           altAnswers: [verb]
         };
@@ -380,7 +295,6 @@
 
       case "cond1modal": {
         var modal = ["can", "may", "should"][seed % 3];
-        // Practicamos el modal en la parte del resultado
         return {
           sentence: "If " + subjLow + " " + partA_present + ", " + subjLow + " ___ (" + modal + ") " + verb + ".",
           answer: modal,
@@ -392,26 +306,24 @@
         return buildConditional(topic, level, subj, verb, comp,
                                 seed % 2 === 0 ? "cond0" : "cond1", seed);
 
-      /* ================= COND 2 ================= */
       case "cond2": {
-        // If + past simple, would + inf.
         if (hole === 0) {
           return {
-            sentence: "If " + subjLow + " ___ (" + verb + ") something, " + result + ".",
+            sentence: "If " + subjLow + " ___ (" + verb + ") something, " + comp + ".",
             answer: partA_past,
             altAnswers: [partA_past]
           };
         }
         return {
           sentence: "If " + subjLow + " " + partA_past + " something, " + subjLow + " ___ (" + verb + ").",
-          answer: partB_would,
-          altAnswers: [partB_would]
+          answer: "would " + verb,
+          altAnswers: ["would " + verb]
         };
       }
 
       case "cond2neg": {
         return {
-          sentence: "If " + subjLow + " didn't ___ (" + verb + ") something, " + result + ".",
+          sentence: "If " + subjLow + " didn't ___ (" + verb + ") something, " + comp + ".",
           answer: verb,
           altAnswers: [verb]
         };
@@ -430,12 +342,10 @@
         return buildConditional(topic, level, subj, verb, comp,
                                 seed % 2 === 0 ? "cond1" : "cond2", seed);
 
-      /* ================= COND 3 ================= */
       case "cond3": {
-        // If + past perfect, would have + participle.
         if (hole === 0) {
           return {
-            sentence: "If " + subjLow + " ___ (" + verb + ") something, " + result + ".",
+            sentence: "If " + subjLow + " ___ (" + verb + ") something, " + comp + ".",
             answer: partA_pastPerf,
             altAnswers: [partA_pastPerf]
           };
@@ -449,7 +359,7 @@
 
       case "cond3neg": {
         return {
-          sentence: "If " + subjLow + " hadn't ___ (" + verb + ") something, " + result + ".",
+          sentence: "If " + subjLow + " hadn't ___ (" + verb + ") something, " + comp + ".",
           answer: participleForm(verb),
           altAnswers: [participleForm(verb)]
         };
@@ -470,24 +380,19 @@
 
       default:
         return {
-          sentence: "If " + subjLow + " ___ (" + verb + ") something, " + result + ".",
+          sentence: "If " + subjLow + " ___ (" + verb + ") something, " + comp + ".",
           answer: partA_present,
           altAnswers: [partA_present]
         };
     }
   }
 
-  /* ----------------------------------------------------------
-     Detección de tipo de nivel
-     ---------------------------------------------------------- */
   function isConditionalLevel(level) {
     return level.tenses && level.tenses[0] && /^cond/.test(level.tenses[0]);
   }
 
-  /* ----------------------------------------------------------
-     Generador principal de una combinación
-     ---------------------------------------------------------- */
-  function generateForTopic(secKey, topicKey, diffKey, levelNum, targetCount) {
+  /* ---------- GENERADOR ---------- */
+  function generateForTopic(secKey, diffKey, levelNum, targetCount) {
     var topic = GRAMMAR_TOPICS[secKey][diffKey];
     var level = topic.levels[levelNum];
     var out = [];
@@ -526,7 +431,6 @@
         exercise.tenseLabel = TENSE_LABELS[tense] || tense;
       }
 
-      // Anti-duplicados
       if (seen[exercise.sentence]) continue;
       seen[exercise.sentence] = true;
 
@@ -548,9 +452,7 @@
     return out;
   }
 
-  /* ----------------------------------------------------------
-     Generar todas las combinaciones
-     ---------------------------------------------------------- */
+  /* ---------- GENERAR TODO ---------- */
   var EXERCISES = {};
   var TARGET = 100;
 
@@ -574,20 +476,13 @@
 
   window.GRAMMAR_EXERCISES = EXERCISES;
 
-  // Resumen
   var total = 0;
-  var summary = {};
   Object.keys(EXERCISES).forEach(function (sec) {
-    summary[sec] = {};
     Object.keys(EXERCISES[sec]).forEach(function (diff) {
-      summary[sec][diff] = {};
       Object.keys(EXERCISES[sec][diff]).forEach(function (lvl) {
-        var n = EXERCISES[sec][diff][lvl].length;
-        summary[sec][diff][lvl] = n;
-        total += n;
+        total += EXERCISES[sec][diff][lvl].length;
       });
     });
   });
   console.log("[GRAMMAR] Ejercicios generados:", total);
-  console.log("[GRAMMAR] Desglose:", summary);
 })();
