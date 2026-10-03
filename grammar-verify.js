@@ -1,11 +1,10 @@
 /* ============================================================
    IRREGULARS — grammar-verify.js
-   Verificación de integridad antes de arrancar grammar.html
+   Verificación previa al arranque de grammar.html
    ------------------------------------------------------------
-   Niveles:
-     A) Carga       → ¿existen los objetos globales?
-     B) Contenido   → ¿tienen la forma esperada?
-     C) Integridad  → ¿cada ejercicio tiene sentence/answer? (solo con ?debug=1)
+   Nivel A: ¿existen los objetos globales?
+   Nivel B: ¿tienen la forma esperada?
+   Nivel C: ¿cada ejercicio tiene sentence/answer? (?debug=1)
    ============================================================ */
 
 (function () {
@@ -13,46 +12,41 @@
 
   var DEBUG = /[?&]debug=1/.test(window.location.search);
 
-  var EXPECTED_SECTIONS = ["tenses", "conditionals", "mastery"];
-  var EXPECTED_LEVELS   = [1, 2, 3, 4];
-
-  // Dificultades esperadas por sección
+  var EXPECTED_SECTIONS    = ["tenses", "conditionals"];
   var EXPECTED_DIFFICULTIES = {
-    tenses:       ["easy", "medium", "hard", "expert", "mastery"],
-    conditionals: ["easy", "medium", "hard", "expert", "mastery"],
-    mastery:      ["global"]
+    tenses:       ["easy", "medium", "hard", "expert"],
+    conditionals: ["easy", "medium", "hard", "expert"]
   };
+  var EXPECTED_LEVELS = [1, 2, 3, 4];
 
+  /* ----------------------------------------------------------
+     Pantalla de error (reemplaza al splash)
+     ---------------------------------------------------------- */
   function fail(errors) {
-    // Pantalla de error en lugar del splash
     var splash = document.getElementById("splash-screen");
     if (splash) splash.remove();
 
-    var main = document.querySelector(".app-main") || document.body;
     var box = document.createElement("div");
     box.className = "verify-error";
     box.innerHTML =
       '<div class="verify-error__inner">' +
         '<div class="verify-error__badge">ERROR DE CARGA</div>' +
         '<h2 class="verify-error__title">No se pudo iniciar la app</h2>' +
-        '<p class="verify-error__text">Faltan archivos o datos críticos. Detalle:</p>' +
+        '<p class="verify-error__text">Faltan archivos o datos críticos:</p>' +
         '<ul class="verify-error__list">' +
           errors.map(function (e) { return "<li>" + e + "</li>"; }).join("") +
         "</ul>" +
         '<button class="btn btn--primary" onclick="location.reload()">Reintentar</button>' +
       "</div>";
-    main.parentNode.insertBefore(box, main);
+    document.body.appendChild(box);
   }
 
-  function warn(msg) {
-    console.warn("[GRAMMAR-VERIFY]", msg);
-    if (typeof window !== "undefined" && window.__grammarWarnings) {
-      window.__grammarWarnings.push(msg);
-    }
-  }
-
+  /* ----------------------------------------------------------
+     Nivel A — Objetos globales
+     ---------------------------------------------------------- */
   function checkA() {
     var errors = [];
+
     if (typeof GRAMMAR_TOPICS === "undefined" || !GRAMMAR_TOPICS) {
       errors.push("Falta GRAMMAR_TOPICS (data-grammar.js no cargó)");
     }
@@ -62,58 +56,85 @@
     if (typeof IrregularsApp === "undefined") {
       errors.push("Falta IrregularsApp (app.js no cargó)");
     }
+    if (typeof window.__grammarApp === "undefined") {
+      errors.push("Falta __grammarApp (grammar-app.js no cargó)");
+    }
+
     return errors;
   }
 
+  /* ----------------------------------------------------------
+     Nivel B — Forma esperada
+     ---------------------------------------------------------- */
   function checkB() {
     var errors = [];
     var warnings = [];
 
     if (typeof GRAMMAR_TOPICS === "undefined") return { errors: errors, warnings: warnings };
 
-    // Secciones esperadas
-    EXPECTED_SECTIONS.forEach(function (sec) {
-      if (!GRAMMAR_TOPICS[sec]) {
-        errors.push("Falta la sección '" + sec + "' en GRAMMAR_TOPICS");
+    EXPECTED_SECTIONS.forEach(function (secKey) {
+      if (!GRAMMAR_TOPICS[secKey]) {
+        errors.push("Falta la sección '" + secKey + "' en GRAMMAR_TOPICS");
         return;
       }
-      // Dificultades esperadas
-      (EXPECTED_DIFFICULTIES[sec] || []).forEach(function (diff) {
-        if (!GRAMMAR_TOPICS[sec][diff]) {
-          errors.push("Falta la dificultad '" + sec + "." + diff + "'");
+      (EXPECTED_DIFFICULTIES[secKey] || []).forEach(function (diffKey) {
+        if (!GRAMMAR_TOPICS[secKey][diffKey]) {
+          errors.push("Falta la dificultad '" + secKey + "." + diffKey + "'");
           return;
         }
-        // Niveles
         EXPECTED_LEVELS.forEach(function (lvl) {
-          if (sec === "mastery" && diff === "global") {
-            // Maestría global: solo un bloque, sin niveles anidados obligatorios
-            return;
-          }
-          if (!GRAMMAR_TOPICS[sec][diff].levels || !GRAMMAR_TOPICS[sec][diff].levels[lvl]) {
-            warnings.push("Falta nivel " + lvl + " en " + sec + "." + diff + " (se usará placeholder)");
+          var lvls = GRAMMAR_TOPICS[secKey][diffKey].levels;
+          if (!lvls || !lvls[lvl]) {
+            warnings.push("Falta nivel " + lvl + " en " + secKey + "." + diffKey);
           }
         });
       });
     });
 
+    // Comprobar que GRAMMAR_EXERCISES tiene contenido real
+    if (typeof GRAMMAR_EXERCISES !== "undefined") {
+      EXPECTED_SECTIONS.forEach(function (secKey) {
+        if (!GRAMMAR_EXERCISES[secKey]) {
+          errors.push("GRAMMAR_EXERCISES no tiene la sección '" + secKey + "'");
+        }
+      });
+    }
+
     return { errors: errors, warnings: warnings };
   }
 
+  /* ----------------------------------------------------------
+     Nivel C — Integridad de ejercicios (solo debug)
+     ---------------------------------------------------------- */
   function checkC() {
     var errors = [];
+
     if (typeof GRAMMAR_EXERCISES === "undefined") return errors;
 
-    Object.keys(GRAMMAR_EXERCISES).forEach(function (sec) {
-      Object.keys(GRAMMAR_EXERCISES[sec] || {}).forEach(function (diff) {
-        Object.keys(GRAMMAR_EXERCISES[sec][diff] || {}).forEach(function (lvl) {
-          var list = GRAMMAR_EXERCISES[sec][diff][lvl];
+    Object.keys(GRAMMAR_EXERCISES).forEach(function (secKey) {
+      Object.keys(GRAMMAR_EXERCISES[secKey] || {}).forEach(function (diffKey) {
+        Object.keys(GRAMMAR_EXERCISES[secKey][diffKey] || {}).forEach(function (lvl) {
+          var list = GRAMMAR_EXERCISES[secKey][diffKey][lvl];
+
           if (!Array.isArray(list)) {
-            errors.push("GRAMMAR_EXERCISES." + sec + "." + diff + "." + lvl + " no es array");
+            errors.push("GRAMMAR_EXERCISES." + secKey + "." + diffKey + "." + lvl + " no es array");
             return;
           }
+          if (list.length === 0) {
+            errors.push("GRAMMAR_EXERCISES." + secKey + "." + diffKey + "." + lvl + " está vacío");
+            return;
+          }
+
           list.forEach(function (ex, i) {
-            if (!ex.sentence) errors.push(sec + "." + diff + "." + lvl + "[" + i + "] sin sentence");
-            if (!ex.answer)   errors.push(sec + "." + diff + "." + lvl + "[" + i + "] sin answer");
+            var prefix = secKey + "." + diffKey + "." + lvl + "[" + i + "]";
+            if (!ex.sentence) errors.push(prefix + " sin sentence");
+            if (!ex.answer)   errors.push(prefix + " sin answer");
+            if (!ex.altAnswers || !ex.altAnswers.length) {
+              errors.push(prefix + " sin altAnswers");
+            }
+            if (ex.sentence && ex.sentence.indexOf("___") === -1) {
+              errors.push(prefix + " sin hueco '___' en la frase");
+            }
           });
         });
       });
@@ -122,14 +143,17 @@
     return errors;
   }
 
+  /* ----------------------------------------------------------
+     Verificación pública
+     ---------------------------------------------------------- */
   window.__grammarVerify = function () {
-    window.__grammarWarnings = [];
-
     var errorsA = checkA();
     if (errorsA.length) { fail(errorsA); return false; }
 
     var b = checkB();
-    b.warnings.forEach(warn);
+    if (b.warnings.length) {
+      b.warnings.forEach(function (w) { console.warn("[GRAMMAR-VERIFY]", w); });
+    }
     if (b.errors.length) { fail(b.errors); return false; }
 
     if (DEBUG) {
@@ -138,11 +162,7 @@
       console.log("[GRAMMAR-VERIFY] Modo debug: integridad OK");
     }
 
-    if (window.__grammarWarnings.length) {
-      console.warn("[GRAMMAR-VERIFY] Advertencias:", window.__grammarWarnings);
-    }
-
-    console.log("[GRAMMAR-VERIFY] Verificación A+B " + (DEBUG ? "+C " : "") + "correcta");
+    console.log("[GRAMMAR-VERIFY] Verificación OK" + (DEBUG ? " (A+B+C)" : " (A+B)"));
     return true;
   };
 })();
