@@ -1,5 +1,5 @@
 /* ============================================================
-   IRREGULARS — app.js
+   IRREGULARS — app.js (con delegación de eventos)
    ============================================================ */
 
 class IrregularsApp {
@@ -20,7 +20,7 @@ class IrregularsApp {
 
   init() {
     this.cacheDom();
-    this.bindStaticHandlers();
+    this.bindGlobalDelegation();
     this.startSplashTimer();
     this.setupKeyboard();
     this.updateStatsUI();
@@ -48,42 +48,62 @@ class IrregularsApp {
     ids.forEach((id) => { this.$[id] = document.getElementById(id); });
   }
 
-  bindStaticHandlers() {
-    const bind = (id, handler) => {
-      const el = document.getElementById(id);
-      if (el) el.addEventListener("click", handler);
-    };
+  /**
+   * UN solo listener en document captura TODOS los clics.
+   * No importa cuándo se cree el botón: si está en el DOM cuando
+   * se pulsa, funciona.
+   */
+  bindGlobalDelegation() {
+    document.addEventListener("click", (e) => {
+      const t = e.target.closest("button, .brand, .chip, .tile");
+      if (!t) return;
 
-    const brand = document.querySelector(".brand");
-    if (brand) brand.addEventListener("click", () => this.goHome());
+      const id = t.id;
 
-    bind("nav-home",  () => this.goHome());
-    bind("nav-stats", () => this.showStats());
-    bind("install-btn", () => this.installPWA());
+      // Marca
+      if (t.classList.contains("brand")) { this.goHome(); return; }
 
-    bind("p-high",   () => this.setPriority("high"));
-    bind("p-medium", () => this.setPriority("medium"));
-    bind("p-low",    () => this.setPriority("low"));
-    bind("p-all",    () => this.setPriority("all"));
+      // Navegación
+      if (id === "nav-home")  { this.goHome(); return; }
+      if (id === "nav-stats") { this.showStats(); return; }
+      if (id === "install-btn") { this.installPWA(); return; }
 
-    bind("m-2col", () => this.setMode("2col"));
-    bind("m-3col", () => this.setMode("3col"));
-    bind("m-both", () => this.setMode("both"));
+      // Prioridad
+      if (id === "p-high")   { this.setPriority("high"); return; }
+      if (id === "p-medium") { this.setPriority("medium"); return; }
+      if (id === "p-low")    { this.setPriority("low"); return; }
+      if (id === "p-all")    { this.setPriority("all"); return; }
 
-    document.querySelectorAll(".limit-btn").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        this.setLimit(Number(btn.dataset.limit));
-      });
+      // Modo
+      if (id === "m-2col") { this.setMode("2col"); return; }
+      if (id === "m-3col") { this.setMode("3col"); return; }
+      if (id === "m-both") { this.setMode("both"); return; }
+
+      // Límite
+      if (t.classList.contains("limit-btn")) {
+        this.setLimit(Number(t.dataset.limit));
+        return;
+      }
+
+      // Comenzar sesión
+      if (id === "start-session-btn") { this.startSession(); return; }
+
+      // Botón "Continuar practicando" (dorso tarjeta)
+      if (id === "next-card-btn") { this.nextCard(); return; }
+
+      // Salir de sesión
+      if (id === "exit-session-btn") { this.confirmExit(); return; }
+
+      // Reiniciar stats
+      if (id === "reset-stats-btn") { this.resetStats(); return; }
     });
 
-    bind("start-session-btn", () => this.startSession());
-
-    const form = document.getElementById("answer-form");
-    if (form) form.addEventListener("submit", (e) => this.checkAnswer(e));
-
-    bind("next-card-btn", () => this.nextCard());
-    bind("exit-session-btn", () => this.confirmExit());
-    bind("reset-stats-btn", () => this.resetStats());
+    // Submit del formulario (no es click, es submit)
+    document.addEventListener("submit", (e) => {
+      if (e.target && e.target.id === "answer-form") {
+        this.checkAnswer(e);
+      }
+    });
   }
 
   startSplashTimer() {
@@ -123,9 +143,8 @@ class IrregularsApp {
     if (el) el.classList.add("is-active");
 
     const labels = { high: "Alta", medium: "Media", low: "Baja", all: "Todo 🔥" };
-    if (this.$["selected-priority-label"]) {
-      this.$["selected-priority-label"].textContent = labels[priority] || priority;
-    }
+    const label = document.getElementById("selected-priority-label");
+    if (label) label.textContent = labels[priority] || priority;
   }
 
   setMode(mode) {
@@ -135,9 +154,8 @@ class IrregularsApp {
     if (el) el.classList.add("is-active");
 
     const labels = { "2col": "2 Columnas", "3col": "3 Columnas", both: "Las Dos 🔥" };
-    if (this.$["selected-mode-label"]) {
-      this.$["selected-mode-label"].textContent = labels[mode] || mode;
-    }
+    const label = document.getElementById("selected-mode-label");
+    if (label) label.textContent = labels[mode] || mode;
   }
 
   setLimit(limit) {
@@ -150,19 +168,21 @@ class IrregularsApp {
   /* ---------- NAVEGACIÓN ---------- */
   showView(viewId) {
     ["view-home", "view-study", "view-stats"].forEach((id) => {
-      const el = this.$(id);
+      const el = document.getElementById(id);
       if (!el) return;
       el.classList.toggle("is-visible", id === viewId);
     });
 
-    if (this.$["nav-home"])  this.$["nav-home"].classList.toggle("is-active", viewId === "view-home");
-    if (this.$["nav-stats"]) this.$["nav-stats"].classList.toggle("is-active", viewId === "view-stats");
+    const navHome = document.getElementById("nav-home");
+    const navStats = document.getElementById("nav-stats");
+    if (navHome)  navHome.classList.toggle("is-active", viewId === "view-home");
+    if (navStats) navStats.classList.toggle("is-active", viewId === "view-stats");
 
     window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
-  goHome()     { this.showView("view-home"); this.updateStatsUI(); }
-  showStats()  { this.showView("view-stats"); this.updateStatsUI(); }
+  goHome()    { this.showView("view-home"); this.updateStatsUI(); }
+  showStats() { this.showView("view-stats"); this.updateStatsUI(); }
 
   confirmExit() {
     const answered = this.sessionScore.correct + this.sessionScore.incorrect;
@@ -173,13 +193,17 @@ class IrregularsApp {
 
   /* ---------- SESIÓN ---------- */
   startSession() {
+    console.log("[IRREGULARS] startSession pulsado");
+    console.log("[IRREGULARS] ALL_EXERCISES:", typeof ALL_EXERCISES, ALL_EXERCISES ? ALL_EXERCISES.length : "null");
+
     if (typeof ALL_EXERCISES === "undefined" || !Array.isArray(ALL_EXERCISES)) {
       this.showToast("Error cargando ejercicios", "is-fail");
-      console.error("[IRREGULARS] ALL_EXERCISES no está definido");
       return;
     }
 
     const pool = this.buildExercisePool();
+    console.log("[IRREGULARS] pool después de filtrar:", pool.length, "prioridad:", this.priority, "modo:", this.mode);
+
     if (pool.length === 0) {
       this.showToast("Sin ejercicios para esta combinación", "is-fail");
       return;
@@ -192,7 +216,8 @@ class IrregularsApp {
     this.sessionScore = { correct: 0, incorrect: 0 };
     this.isFlipped    = false;
 
-    if (this.$["flashcard"]) this.$["flashcard"].classList.remove("is-flipped");
+    const card = document.getElementById("flashcard");
+    if (card) card.classList.remove("is-flipped");
 
     this.showView("view-study");
     this.loadCurrentCard();
@@ -244,9 +269,10 @@ class IrregularsApp {
     this.currentExercise = ex;
     this.isFlipped = false;
 
-    if (this.$["flashcard"]) this.$["flashcard"].classList.remove("is-flipped");
+    const card = document.getElementById("flashcard");
+    if (card) card.classList.remove("is-flipped");
 
-    const badge = this.$["card-type-badge"];
+    const badge = document.getElementById("card-type-badge");
     if (badge) {
       if (ex.type === "past") {
         badge.textContent = "Pasado (2ª columna)";
@@ -257,10 +283,13 @@ class IrregularsApp {
       }
     }
 
-    if (this.$["card-verb-hint"]) this.$["card-verb-hint"].textContent = "verbo: " + ex.verb;
-    if (this.$["card-sentence"])  this.$["card-sentence"].textContent  = ex.sentence;
+    const hint = document.getElementById("card-verb-hint");
+    if (hint) hint.textContent = "verbo: " + ex.verb;
 
-    const input = this.$["answer-input"];
+    const sent = document.getElementById("card-sentence");
+    if (sent) sent.textContent = ex.sentence;
+
+    const input = document.getElementById("answer-input");
     if (input) {
       input.value = "";
       input.disabled = false;
@@ -268,19 +297,18 @@ class IrregularsApp {
     }
 
     const total = this.exercises.length;
-    if (this.$["session-counter"]) {
-      this.$["session-counter"].textContent = (this.currentIndex + 1) + " / " + total;
-    }
-    if (this.$["session-progress-bar"]) {
-      this.$["session-progress-bar"].style.width = ((this.currentIndex / total) * 100) + "%";
-    }
+    const counter = document.getElementById("session-counter");
+    if (counter) counter.textContent = (this.currentIndex + 1) + " / " + total;
+
+    const bar = document.getElementById("session-progress-bar");
+    if (bar) bar.style.width = ((this.currentIndex / total) * 100) + "%";
   }
 
   checkAnswer(event) {
     if (event) event.preventDefault();
     if (!this.currentExercise) return;
 
-    const input = this.$["answer-input"];
+    const input = document.getElementById("answer-input");
     if (!input) return;
 
     const userVal = this.normalize(input.value);
@@ -317,7 +345,6 @@ class IrregularsApp {
       return;
     }
 
-    /* Fallo */
     this.stats.totalIncorrect += 1;
     this.stats.streak = 0;
     this.sessionScore.incorrect += 1;
@@ -327,26 +354,36 @@ class IrregularsApp {
     this.saveStats();
 
     const info = IRREGULAR_VERBS[verb];
-    if (this.$["feedback-correct-word"]) {
-      this.$["feedback-correct-word"].textContent =
-        "Respuesta: " + this.currentExercise.answer.toUpperCase();
-    }
-    if (this.$["mini-verb-title"]) this.$["mini-verb-title"].textContent = info.base.toUpperCase();
-    if (this.$["mini-verb-es"])    this.$["mini-verb-es"].textContent    = info.es;
-    if (this.$["mini-base"])       this.$["mini-base"].textContent       = info.base;
-    if (this.$["mini-past"])       this.$["mini-past"].textContent       = info.past;
-    if (this.$["mini-part"])       this.$["mini-part"].textContent       = info.participle;
+    const fb = document.getElementById("feedback-correct-word");
+    if (fb) fb.textContent = "Respuesta: " + this.currentExercise.answer.toUpperCase();
+
+    const t = document.getElementById("mini-verb-title");
+    if (t) t.textContent = info.base.toUpperCase();
+
+    const es = document.getElementById("mini-verb-es");
+    if (es) es.textContent = info.es;
+
+    const b = document.getElementById("mini-base");
+    if (b) b.textContent = info.base;
+
+    const p = document.getElementById("mini-past");
+    if (p) p.textContent = info.past;
+
+    const pa = document.getElementById("mini-part");
+    if (pa) pa.textContent = info.participle;
 
     this.isFlipped = true;
-    if (this.$["flashcard"]) this.$["flashcard"].classList.add("is-flipped");
+    const card = document.getElementById("flashcard");
+    if (card) card.classList.add("is-flipped");
   }
 
   nextCard() {
     if (!this.isFlipped) return;
     this.isFlipped = false;
-    if (this.$["flashcard"]) this.$["flashcard"].classList.remove("is-flipped");
+    const card = document.getElementById("flashcard");
+    if (card) card.classList.remove("is-flipped");
 
-    const input = this.$["answer-input"];
+    const input = document.getElementById("answer-input");
     if (input) {
       input.value = "";
       input.disabled = false;
@@ -358,9 +395,8 @@ class IrregularsApp {
     const ok = this.sessionScore.correct;
     const fail = this.sessionScore.incorrect;
     this.showToast("Sesión completada · " + ok + " aciertos · " + fail + " fallos", "is-info", 3200);
-    if (this.$["session-progress-bar"]) {
-      this.$["session-progress-bar"].style.width = "100%";
-    }
+    const bar = document.getElementById("session-progress-bar");
+    if (bar) bar.style.width = "100%";
     const self = this;
     setTimeout(function () { self.goHome(); }, 900);
   }
@@ -427,7 +463,7 @@ class IrregularsApp {
     if (!s) return;
 
     const set = (id, val) => {
-      const el = this.$[id];
+      const el = document.getElementById(id);
       if (el) el.textContent = val;
     };
 
@@ -444,8 +480,8 @@ class IrregularsApp {
       const pct = data.total > 0
         ? Math.round((data.correct / data.total) * 100)
         : 0;
-      const prog = this.$["prog-" + p];
-      const bar  = this.$["bar-" + p];
+      const prog = document.getElementById("prog-" + p);
+      const bar  = document.getElementById("bar-" + p);
       if (prog) prog.textContent = pct + "%";
       if (bar)  bar.style.width  = pct + "%";
     });
@@ -464,9 +500,9 @@ class IrregularsApp {
     variant  = variant  || "is-ok";
     duration = duration || 2000;
 
-    const toast   = this.$["toast"];
-    const content = this.$["toast-content"];
-    const msg     = this.$["toast-msg"];
+    const toast   = document.getElementById("toast");
+    const content = document.getElementById("toast-content");
+    const msg     = document.getElementById("toast-msg");
     if (!toast || !content || !msg) return;
 
     content.classList.remove("is-ok", "is-fail", "is-info", "is-neutral");
@@ -488,7 +524,8 @@ class IrregularsApp {
     prompt.userChoice.then((c) => {
       if (c && c.outcome === "accepted") this.showToast("App instalada", "is-info");
       window.__deferredInstallPrompt = null;
-      if (this.$["install-btn"]) this.$["install-btn"].hidden = true;
+      const btn = document.getElementById("install-btn");
+      if (btn) btn.hidden = true;
     }).catch(function () {});
   }
 }
@@ -513,8 +550,10 @@ function bootApp() {
   }
 }
 
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", bootApp);
+/* Espera SIEMPRE a DOMContentLoaded, sin excepciones */
+if (document.readyState === "complete" || document.readyState === "interactive") {
+  // El DOM ya está listo
+  setTimeout(bootApp, 0);
 } else {
-  bootApp();
+  document.addEventListener("DOMContentLoaded", bootApp);
 }
