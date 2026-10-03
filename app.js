@@ -1,574 +1,296 @@
-/* ============================================================
-   IRREGULARS — app.js
-   ============================================================ */
-
+// IRREGULARS APP LOGIC & ADAPTIVE SPACED REPETITION ENGINE
 class IrregularsApp {
-  constructor() {
-    this.priority = "high";
-    this.mode     = "2col";
-    this.limit    = 25;
-
-    this.exercises       = [];
-    this.currentIndex    = 0;
-    this.currentExercise = null;
-    this.isFlipped       = false;
-    this.sessionScore    = { correct: 0, incorrect: 0 };
-
-    this.stats = this.loadStats();
-    this.$ = {};
-  }
-
-  /* ============================================================
-     CICLO DE VIDA
-     ============================================================ */
-  init() {
-    this.cacheDom();
-    this.bindStaticHandlers();
-    this.startSplashTimer();
-    this.setupKeyboard();
-    this.updateStatsUI();
-    console.log("[IRREGULARS] App iniciada");
-  }
-
-  cacheDom() {
-    const ids = [
-      "splash-screen", "splash-progress",
-      "view-home", "view-study", "view-stats",
-      "nav-home", "nav-stats", "install-btn",
-      "selected-priority-label", "selected-mode-label",
-      "session-counter", "session-progress-bar",
-      "flashcard", "card-type-badge", "card-verb-hint", "card-sentence",
-      "answer-form", "answer-input",
-      "feedback-correct-word",
-      "mini-verb-title", "mini-verb-es",
-      "mini-base", "mini-past", "mini-part",
-      "stat-total", "stat-accuracy", "stat-streak", "stat-best-streak",
-      "prog-high", "bar-high",
-      "prog-medium", "bar-medium",
-      "prog-low", "bar-low",
-      "toast", "toast-content", "toast-msg"
-    ];
-    ids.forEach((id) => {
-      this.$[id] = document.getElementById(id);
-    });
-  }
-
-  /* Engancha todos los botones definidos en el HTML */
-  bindStaticHandlers() {
-    const bind = (id, handler) => {
-      const el = document.getElementById(id);
-      if (el) el.addEventListener("click", handler);
-    };
-
-    // Marca
-    document.querySelector(".brand")?.addEventListener("click", () => this.goHome());
-
-    // Navegación
-    bind("nav-home",  () => this.goHome());
-    bind("nav-stats", () => this.showStats());
-    bind("install-btn", () => this.installPWA());
-
-    // Prioridad
-    bind("p-high",   () => this.setPriority("high"));
-    bind("p-medium", () => this.setPriority("medium"));
-    bind("p-low",    () => this.setPriority("low"));
-    bind("p-all",    () => this.setPriority("all"));
-
-    // Modo
-    bind("m-2col", () => this.setMode("2col"));
-    bind("m-3col", () => this.setMode("3col"));
-    bind("m-both", () => this.setMode("both"));
-
-    // Límite (varios botones con la misma clase)
-    document.querySelectorAll(".limit-btn").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const lim = Number(btn.dataset.limit);
-        this.setLimit(lim);
-      });
-    });
-
-    // Comenzar sesión
-    document.querySelectorAll(".btn--primary").forEach((btn) => {
-      if (btn.textContent.trim().toLowerCase().includes("comenzar")) {
-        btn.addEventListener("click", () => this.startSession());
-      }
-    });
-
-    // Formulario de respuesta
-    const form = document.getElementById("answer-form");
-    if (form) {
-      form.addEventListener("submit", (e) => this.checkAnswer(e));
-    }
-
-    // Botón "Continuar practicando" (cara trasera)
-    const nextBtn = document.querySelector(".flashcard__face--back .btn");
-    if (nextBtn) nextBtn.addEventListener("click", () => this.nextCard());
-
-    // Salir de sesión
-    const exitBtn = document.querySelector(".study-bar .btn--ghost");
-    if (exitBtn) exitBtn.addEventListener("click", () => this.confirmExit());
-
-    // Reiniciar datos
-    const resetBtn = document.querySelector(".stats-head .btn--danger");
-    if (resetBtn) resetBtn.addEventListener("click", () => this.resetStats());
-  }
-
-  /**
-   * Se asegura de que el splash desaparece pase lo que pase.
-   * Aunque falle todo lo demás, el usuario nunca se queda mirando el splash.
-   */
-  startSplashTimer() {
-    const splash   = this.$["splash-screen"];
-    const progress = this.$["splash-progress"];
-    if (!splash) return;
-
-    setTimeout(() => { if (progress) progress.style.width = "60%";  }, 150);
-    setTimeout(() => { if (progress) progress.style.width = "100%"; }, 350);
-
-    const hide = () => {
-      splash.classList.add("is-hidden");
-      setTimeout(() => { if (splash.parentNode) splash.remove(); }, 500);
-    };
-
-    setTimeout(hide, 700);
-    // Red de seguridad: quitar el splash a los 2s pase lo que pase
-    setTimeout(hide, 2000);
-  }
-
-  setupKeyboard() {
-    window.addEventListener("keydown", (e) => {
-      if (e.key !== "Enter") return;
-      const study = this.$["view-study"];
-      if (!study || !study.classList.contains("is-visible")) return;
-      if (this.isFlipped) {
-        e.preventDefault();
-        this.nextCard();
-      }
-    });
-  }
-
-  /* ============================================================
-     CONFIGURACIÓN
-     ============================================================ */
-  setPriority(priority) {
-    this.priority = priority;
-    document.querySelectorAll(".tile--priority").forEach((el) =>
-      el.classList.remove("is-active")
-    );
-    const el = document.getElementById(`p-${priority}`);
-    if (el) el.classList.add("is-active");
-
-    const labels = { high: "Alta", medium: "Media", low: "Baja", all: "Todo 🔥" };
-    if (this.$["selected-priority-label"]) {
-      this.$["selected-priority-label"].textContent = labels[priority] || priority;
-    }
-  }
-
-  setMode(mode) {
-    this.mode = mode;
-    document.querySelectorAll(".tile--mode").forEach((el) =>
-      el.classList.remove("is-active")
-    );
-    const el = document.getElementById(`m-${mode}`);
-    if (el) el.classList.add("is-active");
-
-    const labels = { "2col": "2 Columnas", "3col": "3 Columnas", both: "Las Dos 🔥" };
-    if (this.$["selected-mode-label"]) {
-      this.$["selected-mode-label"].textContent = labels[mode] || mode;
-    }
-  }
-
-  setLimit(limit) {
-    this.limit = Number(limit);
-    document.querySelectorAll(".limit-btn").forEach((btn) =>
-      btn.classList.remove("is-active")
-    );
-    const active = document.querySelector(`.limit-btn[data-limit="${this.limit}"]`);
-    if (active) active.classList.add("is-active");
-  }
-
-  /* ============================================================
-     NAVEGACIÓN
-     ============================================================ */
-  showView(viewId) {
-    ["view-home", "view-study", "view-stats"].forEach((id) => {
-      const el = this.$(id);
-      if (!el) return;
-      el.classList.toggle("is-visible", id === viewId);
-    });
-
-    this.$["nav-home"]?.classList.toggle("is-active",  viewId === "view-home");
-    this.$["nav-stats"]?.classList.toggle("is-active", viewId === "view-stats");
-
-    window.scrollTo({ top: 0, behavior: "smooth" });
-  }
-
-  goHome() {
-    this.showView("view-home");
-    this.updateStatsUI();
-  }
-
-  showStats() {
-    this.showView("view-stats");
-    this.updateStatsUI();
-  }
-
-  confirmExit() {
-    const answered = this.sessionScore.correct + this.sessionScore.incorrect;
-    if (answered === 0 || window.confirm("¿Salir de la sesión actual?")) {
-      this.goHome();
-    }
-  }
-
-  /* ============================================================
-     SESIÓN
-     ============================================================ */
-  startSession() {
-    if (typeof ALL_EXERCISES === "undefined" || !Array.isArray(ALL_EXERCISES)) {
-      this.showToast("Error cargando ejercicios", "is-fail");
-      return;
-    }
-
-    const pool = this.buildExercisePool();
-    if (pool.length === 0) {
-      this.showToast("Sin ejercicios para esta combinación", "is-fail");
-      return;
-    }
-
-    const limited = this.limit > 0 ? pool.slice(0, this.limit) : pool;
-
-    this.exercises    = limited;
-    this.currentIndex = 0;
-    this.sessionScore = { correct: 0, incorrect: 0 };
-    this.isFlipped    = false;
-
-    this.$["flashcard"]?.classList.remove("is-flipped");
-
-    this.showView("view-study");
-    this.loadCurrentCard();
-  }
-
-  buildExercisePool() {
-    const failures = this.stats.verbFailures || {};
-
-    let filtered = ALL_EXERCISES.filter((ex) => {
-      if (!this.matchesPriority(ex)) return false;
-      if (!this.matchesMode(ex))     return false;
-      return true;
-    });
-
-    filtered.sort((a, b) => {
-      const fA = failures[a.verb] || 0;
-      const fB = failures[b.verb] || 0;
-      if (fA !== fB) return fB - fA;
-      return Math.random() - 0.5;
-    });
-
-    return filtered;
-  }
-
-  matchesPriority(ex) {
-    const p = this.priority;
-    if (p === "all")  return true;
-    if (p === "low")  return ex.priority === "low" || ex.priority === "very-low";
-    return ex.priority === p;
-  }
-
-  matchesMode(ex) {
-    const m = this.mode;
-    if (m === "both") return true;
-    if (m === "2col") return ex.type === "past";
-    if (m === "3col") return ex.type === "participle";
-    return true;
-  }
-
-  /* ============================================================
-     CICLO DE TARJETA
-     ============================================================ */
-  loadCurrentCard() {
-    if (this.currentIndex >= this.exercises.length) {
-      this.finishSession();
-      return;
-    }
-
-    const ex = this.exercises[this.currentIndex];
-    this.currentExercise = ex;
-    this.isFlipped = false;
-
-    this.$["flashcard"]?.classList.remove("is-flipped");
-
-    const badge = this.$["card-type-badge"];
-    if (badge) {
-      if (ex.type === "past") {
-        badge.textContent = "Pasado (2ª columna)";
-        badge.classList.remove("is-participle");
-      } else {
-        badge.textContent = "Participio (3ª columna)";
-        badge.classList.add("is-participle");
-      }
-    }
-
-    if (this.$["card-verb-hint"]) this.$["card-verb-hint"].textContent = `verbo: ${ex.verb}`;
-    if (this.$["card-sentence"])  this.$["card-sentence"].textContent  = ex.sentence;
-
-    const input = this.$["answer-input"];
-    if (input) {
-      input.value = "";
-      input.disabled = false;
-      setTimeout(() => input.focus(), 80);
-    }
-
-    const total = this.exercises.length;
-    if (this.$["session-counter"]) {
-      this.$["session-counter"].textContent = `${this.currentIndex + 1} / ${total}`;
-    }
-    if (this.$["session-progress-bar"]) {
-      this.$["session-progress-bar"].style.width = `${(this.currentIndex / total) * 100}%`;
-    }
-  }
-
-  checkAnswer(event) {
-    if (event) event.preventDefault();
-    if (!this.currentExercise) return;
-
-    const input = this.$["answer-input"];
-    if (!input) return;
-
-    const userVal    = this.normalize(input.value);
-    const correctVal = this.normalize(this.currentExercise.answer);
-
-    if (userVal.length === 0) {
-      this.showToast("Escribe una respuesta", "is-neutral");
-      input.focus();
-      return;
-    }
-
-    this.stats.totalAttempted += 1;
-
-    const pKey = this.currentExercise.priority;
-    if (!this.stats.priorityStats[pKey]) {
-      this.stats.priorityStats[pKey] = { correct: 0, total: 0 };
-    }
-    this.stats.priorityStats[pKey].total += 1;
-
-    if (this.isCorrect(userVal, this.currentExercise)) {
-      this.stats.totalCorrect += 1;
-      this.stats.priorityStats[pKey].correct += 1;
-      this.stats.streak += 1;
-      if (this.stats.streak > this.stats.bestStreak) {
-        this.stats.bestStreak = this.stats.streak;
-      }
-      this.sessionScore.correct += 1;
-      this.saveStats();
-
-      this.showToast("¡Correcto!", "is-ok");
-      input.disabled = true;
-      this.currentIndex += 1;
-      setTimeout(() => this.loadCurrentCard(), 420);
-      return;
-    }
-
-    // Fallo
-    this.stats.totalIncorrect += 1;
-    this.stats.streak = 0;
-    this.sessionScore.incorrect += 1;
-
-    const verb = this.currentExercise.verb;
-    this.stats.verbFailures[verb] = (this.stats.verbFailures[verb] || 0) + 1;
-    this.saveStats();
-
-    const info = IRREGULAR_VERBS[verb];
-    if (this.$["feedback-correct-word"]) {
-      this.$["feedback-correct-word"].textContent =
-        `Respuesta: ${this.currentExercise.answer.toUpperCase()}`;
-    }
-    if (this.$["mini-verb-title"]) this.$["mini-verb-title"].textContent = info.base.toUpperCase();
-    if (this.$["mini-verb-es"])    this.$["mini-verb-es"].textContent    = info.es;
-    if (this.$["mini-base"])       this.$["mini-base"].textContent       = info.base;
-    if (this.$["mini-past"])       this.$["mini-past"].textContent       = info.past;
-    if (this.$["mini-part"])       this.$["mini-part"].textContent       = info.participle;
-
-    this.isFlipped = true;
-    this.$["flashcard"]?.classList.add("is-flipped");
-  }
-
-  nextCard() {
-    if (!this.isFlipped) return;
-    this.isFlipped = false;
-    this.$["flashcard"]?.classList.remove("is-flipped");
-
-    const input = this.$["answer-input"];
-    if (input) {
-      input.value = "";
-      input.disabled = false;
-      setTimeout(() => input.focus(), 120);
-    }
-  }
-
-  finishSession() {
-    const ok = this.sessionScore.correct;
-    const fail = this.sessionScore.incorrect;
-    this.showToast(`Sesión completada · ${ok} aciertos · ${fail} fallos`, "is-info", 3200);
-    if (this.$["session-progress-bar"]) {
-      this.$["session-progress-bar"].style.width = "100%";
-    }
-    setTimeout(() => this.goHome(), 900);
-  }
-
-  /* ============================================================
-     VALIDACIÓN
-     ============================================================ */
-  normalize(str) {
-    return String(str || "").trim().toLowerCase().replace(/\s+/g, " ");
-  }
-
-  isCorrect(userVal, ex) {
-    const candidates = [ex.answer, ...(ex.altAnswers || [])]
-      .map((c) => this.normalize(c));
-    return candidates.includes(userVal);
-  }
-
-  /* ============================================================
-     ESTADÍSTICAS
-     ============================================================ */
-  defaultStats() {
-    return {
-      totalAttempted: 0,
-      totalCorrect:   0,
-      totalIncorrect: 0,
-      streak:         0,
-      bestStreak:     0,
-      verbFailures:   {},
-      priorityStats: {
-        high:       { correct: 0, total: 0 },
-        medium:     { correct: 0, total: 0 },
-        low:        { correct: 0, total: 0 },
-        "very-low": { correct: 0, total: 0 }
-      }
-    };
-  }
-
-  loadStats() {
-    try {
-      const raw = localStorage.getItem("irregulars_stats_v1");
-      if (!raw) return this.defaultStats();
-      const parsed = JSON.parse(raw);
-      const base = this.defaultStats();
-      return {
-        ...base,
-        ...parsed,
-        priorityStats: { ...base.priorityStats, ...(parsed.priorityStats || {}) },
-        verbFailures: parsed.verbFailures || {}
-      };
-    } catch (e) {
-      return this.defaultStats();
-    }
-  }
-
-  saveStats() {
-    try {
-      localStorage.setItem("irregulars_stats_v1", JSON.stringify(this.stats));
-    } catch (e) { /* noop */ }
-  }
-
-  updateStatsUI() {
-    const s = this.stats;
-    if (!s) return;
-
-    const set = (id, val) => {
-      const el = this.$[id];
-      if (el) el.textContent = val;
-    };
-
-    set("stat-total", s.totalAttempted);
-    const acc = s.totalAttempted > 0
-      ? Math.round((s.totalCorrect / s.totalAttempted) * 100)
-      : 0;
-    set("stat-accuracy", `${acc}%`);
-    set("stat-streak", s.streak);
-    set("stat-best-streak", s.bestStreak);
-
-    ["high", "medium", "low"].forEach((p) => {
-      const data = s.priorityStats[p] || { correct: 0, total: 0 };
-      const pct = data.total > 0
-        ? Math.round((data.correct / data.total) * 100)
-        : 0;
-      const prog = this.$[`prog-${p}`];
-      const bar  = this.$[`bar-${p}`];
-      if (prog) prog.textContent = `${pct}%`;
-      if (bar)  bar.style.width  = `${pct}%`;
-    });
-  }
-
-  resetStats() {
-    if (!window.confirm("¿Reiniciar todas las estadísticas?")) return;
-    try { localStorage.removeItem("irregulars_stats_v1"); } catch (e) {}
-    this.stats = this.defaultStats();
-    this.updateStatsUI();
-    this.showToast("Estadísticas reiniciadas", "is-neutral");
-  }
-
-  /* ============================================================
-     TOAST
-     ============================================================ */
-  showToast(message, variant = "is-ok", duration = 2000) {
-    const toast   = this.$["toast"];
-    const content = this.$["toast-content"];
-    const msg     = this.$["toast-msg"];
-    if (!toast || !content || !msg) return;
-
-    content.classList.remove("is-ok", "is-fail", "is-info", "is-neutral");
-    content.classList.add(variant);
-    msg.textContent = message;
-    toast.classList.add("is-visible");
-
-    clearTimeout(this._toastTimer);
-    this._toastTimer = setTimeout(() => {
-      toast.classList.remove("is-visible");
-    }, duration);
-  }
-
-  /* ============================================================
-     PWA
-     ============================================================ */
-  installPWA() {
-    const prompt = window.__deferredInstallPrompt;
-    if (!prompt) return;
-    prompt.prompt();
-    prompt.userChoice.then((c) => {
-      if (c && c.outcome === "accepted") this.showToast("App instalada", "is-info");
-      window.__deferredInstallPrompt = null;
-      const btn = this.$["install-btn"];
-      if (btn) btn.hidden = true;
-    }).catch(() => {});
-  }
+constructor() {
+this.priority = 'high';
+this.mode = '2col';
+this.limit = 25;
+this.exercises = [];
+this.currentIndex = 0;
+this.score = { correct: 0, incorrect: 0, streak: 0, bestStreak: 0 };
+this.userStats = this.loadStats();
+this.currentExercise = null;
+this.isFlipped = false;
 }
-
-/* ============================================================
-   ARRANQUE GLOBAL — a prueba de balas
-   ============================================================ */
-const app = new IrregularsApp();
-
-window.addEventListener("beforeinstallprompt", (e) => {
-  e.preventDefault();
-  window.__deferredInstallPrompt = e;
-  const btn = document.getElementById("install-btn");
-  if (btn) btn.hidden = false;
+​init() {
+this.simulateSplash();
+this.updateStatsUI();
+this.setupEventListeners();
+}
+​simulateSplash() {
+const splash = document.getElementById('splash-screen');
+const progressBar = document.getElementById('splash-progress');
+​setTimeout(() => { progressBar.style.width = '60%'; }, 150);
+setTimeout(() => { progressBar.style.width = '100%'; }, 350);
+setTimeout(() => {
+splash.style.opacity = '0';
+setTimeout(() => {
+splash.remove();
+}, 500);
+}, 600);
+}
+​setupEventListeners() {
+window.addEventListener('keydown', (e) => {
+if (e.key === 'Enter') {
+const studyView = document.getElementById('view-study');
+if (!studyView.classList.contains('hidden')) {
+if (this.isFlipped) {
+this.nextCard();
+}
+}
+}
 });
-
-function bootApp() {
-  try {
-    app.init();
-  } catch (err) {
-    console.error("[IRREGULARS] Error en init:", err);
-    // Si algo falla, al menos quitamos el splash para no dejar al usuario colgado
-    const splash = document.getElementById("splash-screen");
-    if (splash) splash.remove();
-  }
 }
-
-if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", bootApp);
+​loadStats() {
+const saved = localStorage.getItem('irregulars_stats');
+if (saved) {
+try { return JSON.parse(saved); } catch(e) { console.error(e); }
+}
+return {
+totalAttempted: 0,
+totalCorrect: 0,
+totalIncorrect: 0,
+streak: 0,
+bestStreak: 0,
+verbFailures: {},
+priorityStats: {
+high: { correct: 0, total: 0 },
+medium: { correct: 0, total: 0 },
+low: { correct: 0, total: 0 },
+"very-low": { correct: 0, total: 0 }
+}
+};
+}
+​saveStats() {
+localStorage.setItem('irregulars_stats', JSON.stringify(this.userStats));
+}
+​setPriority(priority) {
+this.priority = priority;
+document.querySelectorAll('.priority-card').forEach(el => el.classList.remove('active'));
+document.getElementById(p-${priority}).classList.add('active');
+​const labels = { high: 'Alta', medium: 'Media', low: 'Baja', all: 'Todo 🔥' };
+document.getElementById('selected-priority-label').innerText = labels[priority];
+}
+​setMode(mode) {
+this.mode = mode;
+document.querySelectorAll('.mode-card').forEach(el => el.classList.remove('active'));
+document.getElementById(m-${mode}).classList.add('active');
+​const labels = { '2col': '2 Columnas', '3col': '3 Columnas', 'both': 'Las Dos 🔥' };
+document.getElementById('selected-mode-label').innerText = labels[mode];
+}
+​setLimit(limit) {
+this.limit = limit;
+document.querySelectorAll('.limit-btn').forEach(el => {
+el.classList.remove('border-indigo-500', 'bg-indigo-500/10', 'text-indigo-300');
+el.classList.add('border-slate-800', 'bg-slate-900/50', 'text-slate-300');
+});
+const btn = document.querySelector([data-limit="${limit}"]);
+if (btn) {
+btn.classList.remove('border-slate-800', 'bg-slate-900/50', 'text-slate-300');
+btn.classList.add('border-indigo-500', 'bg-indigo-500/10', 'text-indigo-300');
+}
+}
+​startSession() {
+// Filter exercises based on priority and mode
+let filtered = ALL_EXERCISES.filter(ex => {
+if (this.priority !== 'all') {
+if (this.priority === 'low') {
+// Include low and very-low for 'baja' selection or specific
+if (ex.priority !== 'low' && ex.priority !== 'very-low') return false;
+} else if (ex.priority !== this.priority) {
+return false;
+}
+}
+​if (this.mode === '2col' && ex.type !== 'past') return false;
+if (this.mode === '3col' && ex.type !== 'participle') return false;
+// 'both' includes all types
+return true;
+});
+​// Adaptive weighting: items with more failures appear more frequently
+filtered.sort((a, b) => {
+const failsA = this.userStats.verbFailures[a.verb] || 0;
+const failsB = this.userStats.verbFailures[b.verb] || 0;
+return failsB - failsA + (Math.random() - 0.5) * 0.5;
+});
+​if (this.limit > 0) {
+filtered = filtered.slice(0, this.limit);
+}
+​if (filtered.length === 0) {
+alert('No hay ejercicios disponibles para esta combinación.');
+return;
+}
+​this.exercises = filtered;
+this.currentIndex = 0;
+this.score = { correct: 0, incorrect: 0, streak: this.userStats.streak, bestStreak: this.userStats.bestStreak };
+​document.getElementById('view-home').classList.add('hidden');
+document.getElementById('view-stats').classList.add('hidden');
+document.getElementById('view-study').classList.remove('hidden');
+​document.getElementById('nav-home').classList.add('bg-slate-800/80', 'text-white');
+document.getElementById('nav-stats').classList.remove('bg-slate-800/80', 'text-white');
+​this.loadCurrentCard();
+}
+​loadCurrentCard() {
+if (this.currentIndex >= this.exercises.length) {
+this.finishSession();
+return;
+}
+​this.currentExercise = this.exercises[this.currentIndex];
+this.isFlipped = false;
+document.getElementById('flashcard').classList.remove('flipped');
+​// Update UI elements
+const typeBadge = document.getElementById('card-type-badge');
+if (this.currentExercise.type === 'past') {
+typeBadge.innerText = 'Pasado (2ª Columna)';
+typeBadge.className = 'px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase bg-indigo-500/10 text-indigo-400 border border-indigo-500/20';
 } else {
-  bootApp();
+typeBadge.innerText = 'Participio (3ª Columna)';
+typeBadge.className = 'px-2.5 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase bg-violet-500/10 text-violet-400 border border-violet-500/20';
 }
+​document.getElementById('card-verb-hint').innerText = verbo: ${this.currentExercise.verb};
+document.getElementById('card-sentence').innerText = this.currentExercise.sentence;
+​const input = document.getElementById('answer-input');
+input.value = '';
+setTimeout(() => input.focus(), 100);
+​// Update session counter
+const total = this.exercises.length;
+document.getElementById('session-counter').innerText = ${this.currentIndex + 1} / ${total};
+document.getElementById('session-progress-bar').style.width = ${((this.currentIndex) / total) * 100}%;
+}
+​checkAnswer(e) {
+if (e) e.preventDefault();
+const input = document.getElementById('answer-input');
+const userVal = input.value.trim().toLowerCase();
+const correctVal = this.currentExercise.answer.toLowerCase();
+​this.userStats.totalAttempted++;
+​const verbData = IRREGULAR_VERBS_DATA[this.currentExercise.verb];
+const pKey = verbData.priority;
+if (!this.userStats.priorityStats[pKey]) {
+this.userStats.priorityStats[pKey] = { correct: 0, total: 0 };
+}
+this.userStats.priorityStats[pKey].total++;
+​if (userVal === correctVal) {
+// CORRECT
+this.userStats.totalCorrect++;
+this.userStats.priorityStats[pKey].correct++;
+this.score.correct++;
+this.score.streak++;
+if (this.score.streak > this.score.bestStreak) {
+this.score.bestStreak = this.score.streak;
+}
+this.userStats.streak = this.score.streak;
+this.userStats.bestStreak = this.score.bestStreak;
+this.saveStats();
+​this.showToast('✓ ¡Correcto!', 'bg-emerald-600');
+this.currentIndex++;
+setTimeout(() => this.loadCurrentCard(), 400);
+} else {
+// INCORRECT -> FLIP CARD (Mandatory repeat until correct)
+this.userStats.totalIncorrect++;
+this.score.streak = 0;
+this.userStats.streak = 0;
+​if (!this.userStats.verbFailures[this.currentExercise.verb]) {
+this.userStats.verbFailures[this.currentExercise.verb] = 0;
+}
+this.userStats.verbFailures[this.currentExercise.verb]++;
+this.saveStats();
+​// Setup back of card details
+document.getElementById('feedback-correct-word').innerText = Respuesta: ${correctVal.toUpperCase()};
+document.getElementById('mini-verb-title').innerText = verbData.base;
+document.getElementById('mini-verb-es').innerText = verbData.es;
+document.getElementById('mini-base').innerText = verbData.base;
+document.getElementById('mini-past').innerText = verbData.past;
+document.getElementById('mini-part').innerText = verbData.participle;
+​this.isFlipped = true;
+document.getElementById('flashcard').classList.add('flipped');
+}
+}
+​nextCard() {
+// After failing, card returns to same question for retry
+this.isFlipped = false;
+document.getElementById('flashcard').classList.remove('flipped');
+const input = document.getElementById('answer-input');
+input.value = '';
+setTimeout(() => input.focus(), 100);
+}
+​finishSession() {
+this.showToast(¡Sesión completada! Aciertos: ${this.score.correct}, 'bg-indigo-600');
+this.goHome();
+}
+​goHome() {
+document.getElementById('view-study').classList.add('hidden');
+document.getElementById('view-stats').classList.add('hidden');
+document.getElementById('view-home').classList.remove('hidden');
+​document.getElementById('nav-home').classList.add('bg-slate-800/80', 'text-white');
+document.getElementById('nav-stats').classList.remove('bg-slate-800/80', 'text-white');
+this.updateStatsUI();
+}
+​showStats() {
+document.getElementById('view-home').classList.add('hidden');
+document.getElementById('view-study').classList.add('hidden');
+document.getElementById('view-stats').classList.remove('hidden');
+​document.getElementById('nav-stats').classList.add('bg-slate-800/80', 'text-white');
+document.getElementById('nav-home').classList.remove('bg-slate-800/80', 'text-white');
+​this.updateStatsUI();
+}
+​updateStatsUI() {
+document.getElementById('stat-total').innerText = this.userStats.totalAttempted;
+​const accuracy = this.userStats.totalAttempted > 0
+? Math.round((this.userStats.totalCorrect / this.userStats.totalAttempted) * 100)
+: 0;
+document.getElementById('stat-accuracy').innerText = ${accuracy}%;
+document.getElementById('stat-streak').innerText = ${this.userStats.streak} 🔥;
+document.getElementById('stat-best-streak').innerText = this.userStats.bestStreak;
+​// Priority Breakdown Bars
+const pStats = this.userStats.priorityStats;
+​['high', 'medium', 'low'].forEach(p => {
+const data = pStats[p] || { correct: 0, total: 0 };
+const pct = data.total > 0 ? Math.round((data.correct / data.total) * 100) : 0;
+document.getElementById(prog-${p}).innerText = ${pct}%;
+document.getElementById(bar-${p}).style.width = ${pct}%;
+});
+}
+​resetStats() {
+if (confirm('¿Estás seguro de reiniciar todas las estadísticas y progreso?')) {
+localStorage.removeItem('irregulars_stats');
+this.userStats = this.loadStats();
+this.updateStatsUI();
+this.showToast('Estadísticas restablecidas', 'bg-slate-700');
+}
+}
+​confirmExit() {
+if (confirm('¿Seguro que deseas salir de la sesión actual?')) {
+this.goHome();
+}
+}
+​showToast(message, bgColor = 'bg-emerald-600') {
+const toast = document.getElementById('toast');
+const content = document.getElementById('toast-content');
+const msg = document.getElementById('toast-msg');
+​content.className = ${bgColor} text-white px-4 py-2.5 rounded-xl shadow-xl font-bold text-xs flex items-center space-x-2;
+msg.innerText = message;
+​toast.classList.remove('translate-y-20', 'opacity-0');
+setTimeout(() => {
+toast.classList.add('translate-y-20', 'opacity-0');
+}, 2200);
+}
+​installPWA() {
+if (window.deferredPrompt) {
+window.deferredPrompt.prompt();
+window.deferredPrompt.userChoice.then((choiceResult) => {
+if (choiceResult.outcome === 'accepted') {
+console.log('User accepted the install prompt');
+}
+window.deferredPrompt = null;
+document.getElementById('install-btn').classList.add('hidden');
+});
+}
+}
+}
+​// Global PWA prompt listener
+window.addEventListener('beforeinstallprompt', (e) => {
+e.preventDefault();
+window.deferredPrompt = e;
+const installBtn = document.getElementById('install-btn');
+if (installBtn) installBtn.classList.remove('hidden');
+});
+​const app = new IrregularsApp();
+window.addEventListener('DOMContentLoaded', () => app.init());
