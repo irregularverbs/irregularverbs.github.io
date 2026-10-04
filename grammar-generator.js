@@ -122,7 +122,6 @@
     pastPerfect:       "Past Perfect"
   };
 
-  /* ---------- TIEMPOS VERBALES ---------- */
   function buildStandard(topic, level, tense, subj, verb, comp, time, seed) {
     var tpl = level.template;
     var timeStr = time ? " " + time : "";
@@ -222,12 +221,11 @@
     }
   }
 
-  /* ---------- CONDICIONALES ---------- */
   function buildConditional(topic, level, subj, verb, comp, template, seed) {
     var subjLow = subj.toLowerCase();
-    var partA_present  = conjPresentSimple(verb, subj);
-    var partA_past     = conjPastSimple(verb, subj);
-    var partA_pastPerf = conjPastPerfect(verb, subj);
+    var partA_present   = conjPresentSimple(verb, subj);
+    var partA_past      = conjPastSimple(verb, subj);
+    var partA_pastPerf  = conjPastPerfect(verb, subj);
     var partB_wouldHave = "would have " + participleForm(verb);
     var hole = seed % 2;
 
@@ -391,7 +389,6 @@
     return level.tenses && level.tenses[0] && /^cond/.test(level.tenses[0]);
   }
 
-  /* ---------- GENERADOR ---------- */
   function generateForTopic(secKey, diffKey, levelNum, targetCount) {
     var topic = GRAMMAR_TOPICS[secKey][diffKey];
     var level = topic.levels[levelNum];
@@ -452,7 +449,6 @@
     return out;
   }
 
-  /* ---------- GENERAR TODO ---------- */
   var EXERCISES = {};
   var TARGET = 100;
 
