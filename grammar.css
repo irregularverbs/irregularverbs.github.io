@@ -1,308 +1,89 @@
 /* ============================================================
    IRREGULARS — grammar.css
-   Solo lo específico de grammar.html. Reutiliza styles.css.
+   Estilos específicos de grammar.html. Reutiliza styles.css.
    ============================================================ */
 
-/* ------------------------------------------------------------
-   1. PANTALLA DE ERROR (verificación)
-   ------------------------------------------------------------ */
-.verify-error {
-  position: fixed;
-  inset: 0;
-  z-index: 200;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: var(--s-5);
-  background: var(--bg);
-}
+/* ---------- Pantalla de error de verificación ---------- */
+.verify-error { position: fixed; inset: 0; z-index: 200; display: flex; align-items: center; justify-content: center; padding: var(--s-5); background: var(--bg); }
+.verify-error__inner { max-width: 520px; width: 100%; padding: var(--s-6); border: 1px solid rgba(239,68,68,0.35); border-radius: var(--r-xl); background: linear-gradient(180deg,#1a0f12 0%,#0e0a0b 100%); }
+.verify-error__badge { display: inline-block; padding: 4px 10px; border-radius: var(--r-full); background: rgba(239,68,68,0.15); color: #f87171; font-size: 10px; font-weight: 700; letter-spacing: 0.1em; margin-bottom: var(--s-3); }
+.verify-error__title { font-size: 20px; font-weight: 800; margin-bottom: var(--s-3); }
+.verify-error__text { font-size: 13px; color: var(--text-2); margin-bottom: var(--s-4); }
+.verify-error__list { list-style: none; padding: 0; margin: 0 0 var(--s-5); font-family: var(--font-mono); font-size: 12px; color: #f87171; }
+.verify-error__list li { padding: 6px 10px; border-left: 2px solid rgba(239,68,68,0.4); margin-bottom: 4px; background: rgba(239,68,68,0.05); }
 
-.verify-error__inner {
-  max-width: 520px;
-  width: 100%;
-  padding: var(--s-6);
-  border: 1px solid rgba(239, 68, 68, 0.35);
-  border-radius: var(--r-xl);
-  background: linear-gradient(180deg, #1a0f12 0%, #0e0a0b 100%);
-}
+/* ---------- Banner duo ---------- */
+.banner-duo { display: grid; grid-template-columns: 1fr 1fr; gap: var(--s-3); margin-bottom: var(--s-7); }
+@media (max-width: 640px) { .banner-duo { grid-template-columns: 1fr; } }
+.banner-duo .banner { margin-bottom: 0; display: flex; flex-direction: column; text-decoration: none; color: inherit; transition: border-color var(--t-fast), transform var(--t-fast); }
+.banner--link { cursor: pointer; }
+.banner--link:hover { border-color: rgba(99,102,241,0.4); transform: translateY(-2px); }
+.banner--link.is-current { border-color: rgba(99,102,241,0.25); }
+.banner__cta { margin-top: auto; padding-top: var(--s-4); font-size: 12px; font-weight: 700; color: var(--accent-2); }
+.banner__cta--current { color: var(--text-4); font-weight: 600; }
 
-.verify-error__badge {
-  display: inline-block;
-  padding: 4px 10px;
-  border-radius: var(--r-full);
-  background: rgba(239, 68, 68, 0.15);
-  color: #f87171;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.1em;
-  margin-bottom: var(--s-3);
-}
+/* ---------- Tarjetas de sección ---------- */
+.section-cards { display: grid; grid-template-columns: repeat(2,1fr); gap: var(--s-3); }
+@media (max-width: 560px) { .section-cards { grid-template-columns: 1fr; } }
+.section-card { position: relative; padding: var(--s-5); border: 1px solid var(--line); border-radius: var(--r-xl); background: linear-gradient(180deg,var(--surface) 0%,var(--bg-2) 100%); text-align: left; transition: border-color var(--t-fast), transform var(--t-fast); }
+.section-card:hover { border-color: #2c2c3a; transform: translateY(-2px); }
+.section-card.is-active { border-color: rgba(99,102,241,0.6); background: linear-gradient(180deg,rgba(99,102,241,0.08) 0%,var(--bg-2) 100%); }
+.section-card__icon { font-size: 26px; margin-bottom: var(--s-3); display: block; line-height: 1; }
+.section-card__title { font-size: 15px; font-weight: 800; margin-bottom: var(--s-1); display: block; }
+.section-card__desc { font-size: 12px; color: var(--text-3); line-height: 1.5; display: block; }
 
-.verify-error__title {
-  font-size: 20px;
-  font-weight: 800;
-  margin-bottom: var(--s-3);
-}
+/* ---------- Grid de dificultades ---------- */
+.difficulty-grid { display: grid; grid-template-columns: repeat(4,1fr); gap: var(--s-2); }
+@media (max-width: 720px) { .difficulty-grid { grid-template-columns: repeat(2,1fr); } }
+.difficulty-tile { padding: var(--s-4); border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); text-align: left; transition: all var(--t-fast); display: flex; flex-direction: column; gap: 4px; }
+.difficulty-tile:hover { border-color: #2c2c3a; background: var(--surface-2); }
+.difficulty-tile:active { transform: scale(0.985); }
+.difficulty-tile.is-active { border-color: rgba(99,102,241,0.55); background: rgba(99,102,241,0.08); box-shadow: 0 0 0 1px rgba(99,102,241,0.15) inset; }
+.difficulty-tile__badge { display: inline-block; padding: 3px 8px; border-radius: var(--r-full); font-size: 9px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; align-self: flex-start; margin-bottom: var(--s-1); }
+.difficulty-tile__title { font-size: 13px; font-weight: 700; display: block; }
+.difficulty-tile__cefr { font-family: var(--font-mono); font-size: 10px; color: var(--text-4); font-weight: 600; }
+.difficulty-tile[data-diff="easy"]   .difficulty-tile__badge { background: rgba(16,185,129,.12); color: #34d399; }
+.difficulty-tile[data-diff="medium"] .difficulty-tile__badge { background: rgba(245,158,11,.12); color: #fbbf24; }
+.difficulty-tile[data-diff="hard"]   .difficulty-tile__badge { background: rgba(249,115,22,.12); color: #fb923c; }
+.difficulty-tile[data-diff="expert"] .difficulty-tile__badge { background: rgba(239,68,68,.12);  color: #f87171; }
 
-.verify-error__text {
-  font-size: 13px;
-  color: var(--text-2);
-  margin-bottom: var(--s-4);
-}
+/* ---------- Panel de reglas ---------- */
+.rules-panel { padding: var(--s-5); border: 1px solid var(--line); border-radius: var(--r-lg); background: var(--surface); }
+.rules-panel__head { display: flex; align-items: center; justify-content: space-between; margin-bottom: var(--s-3); gap: var(--s-3); flex-wrap: wrap; }
+.rules-panel__title { font-size: 14px; font-weight: 800; }
+.rules-panel__cefr { font-family: var(--font-mono); font-size: 10px; padding: 3px 8px; border-radius: var(--r-full); background: var(--accent-soft); color: var(--accent-2); font-weight: 700; }
+.rules-panel__desc { font-size: 12.5px; color: var(--text-2); margin-bottom: var(--s-4); line-height: 1.55; }
+.rules-panel__list { list-style: none; padding: 0; margin: 0; }
+.rules-panel__list li { position: relative; padding-left: 18px; margin-bottom: var(--s-2); font-size: 12.5px; color: var(--text-2); line-height: 1.5; }
+.rules-panel__list li::before { content: "▸"; position: absolute; left: 0; color: var(--accent-2); font-weight: 700; }
 
-.verify-error__list {
-  list-style: none;
-  padding: 0;
-  margin: 0 0 var(--s-5);
-  font-family: var(--font-mono);
-  font-size: 12px;
-  color: #f87171;
-}
-
-.verify-error__list li {
-  padding: 6px 10px;
-  border-left: 2px solid rgba(239, 68, 68, 0.4);
-  margin-bottom: 4px;
-  background: rgba(239, 68, 68, 0.05);
-}
-
-/* ------------------------------------------------------------
-   2. TARJETAS DE SECCIÓN
-   ------------------------------------------------------------ */
-.section-cards {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: var(--s-3);
-}
-
-@media (max-width: 560px) {
-  .section-cards { grid-template-columns: 1fr; }
-}
-
-.section-card {
-  position: relative;
-  padding: var(--s-5);
-  border: 1px solid var(--line);
-  border-radius: var(--r-xl);
-  background: linear-gradient(180deg, var(--surface) 0%, var(--bg-2) 100%);
-  text-align: left;
-  transition: border-color var(--t-fast), transform var(--t-fast);
-  overflow: hidden;
-}
-
-.section-card:hover {
-  border-color: #2c2c3a;
-  transform: translateY(-2px);
-}
-
-.section-card.is-active {
-  border-color: rgba(99, 102, 241, 0.6);
-  background: linear-gradient(180deg, rgba(99, 102, 241, 0.08) 0%, var(--bg-2) 100%);
-}
-
-.section-card__icon {
-  font-size: 26px;
-  margin-bottom: var(--s-3);
-  display: block;
-  line-height: 1;
-}
-
-.section-card__title {
-  font-size: 15px;
-  font-weight: 800;
-  margin-bottom: var(--s-1);
-  display: block;
-  letter-spacing: -0.01em;
-}
-
-.section-card__desc {
-  font-size: 12px;
-  color: var(--text-3);
-  line-height: 1.5;
-  display: block;
-}
-
-/* ------------------------------------------------------------
-   3. GRID DE DIFICULTADES
-   ------------------------------------------------------------ */
-.difficulty-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: var(--s-2);
-}
-
-@media (max-width: 720px) {
-  .difficulty-grid { grid-template-columns: repeat(2, 1fr); }
-}
-
-.difficulty-tile {
+/* ---------- Feedback detallado al fallar ---------- */
+.feedback-box {
   padding: var(--s-4);
   border: 1px solid var(--line);
   border-radius: var(--r-lg);
-  background: var(--surface);
-  text-align: left;
-  transition: all var(--t-fast);
+  background: var(--bg-2);
   display: flex;
   flex-direction: column;
-  gap: 4px;
-}
-
-.difficulty-tile:hover {
-  border-color: #2c2c3a;
-  background: var(--surface-2);
-}
-
-.difficulty-tile:active {
-  transform: scale(0.985);
-}
-
-.difficulty-tile.is-active {
-  border-color: rgba(99, 102, 241, 0.55);
-  background: rgba(99, 102, 241, 0.08);
-  box-shadow: 0 0 0 1px rgba(99, 102, 241, 0.15) inset;
-}
-
-.difficulty-tile__badge {
-  display: inline-block;
-  padding: 3px 8px;
-  border-radius: var(--r-full);
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  align-self: flex-start;
-  margin-bottom: var(--s-1);
-}
-
-.difficulty-tile__title {
-  font-size: 13px;
-  font-weight: 700;
-  display: block;
-}
-
-.difficulty-tile__cefr {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  color: var(--text-4);
-  font-weight: 600;
-}
-
-/* Colores por dificultad (badge) */
-.difficulty-tile[data-diff="easy"]   .difficulty-tile__badge {
-  background: rgba(16, 185, 129, 0.12);
-  color: #34d399;
-}
-.difficulty-tile[data-diff="medium"] .difficulty-tile__badge {
-  background: rgba(245, 158, 11, 0.12);
-  color: #fbbf24;
-}
-.difficulty-tile[data-diff="hard"]   .difficulty-tile__badge {
-  background: rgba(249, 115, 22, 0.12);
-  color: #fb923c;
-}
-.difficulty-tile[data-diff="expert"] .difficulty-tile__badge {
-  background: rgba(239, 68, 68, 0.12);
-  color: #f87171;
-}
-.difficulty-tile[data-diff="mastery"] .difficulty-tile__badge {
-  background: rgba(139, 92, 246, 0.15);
-  color: #a78bfa;
-}
-
-/* ------------------------------------------------------------
-   4. PANEL DE REGLAS
-   ------------------------------------------------------------ */
-.rules-panel {
-  padding: var(--s-5);
-  border: 1px solid var(--line);
-  border-radius: var(--r-lg);
-  background: var(--surface);
-}
-
-.rules-panel__head {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: var(--s-3);
-  gap: var(--s-3);
-  flex-wrap: wrap;
-}
-
-.rules-panel__title {
-  font-size: 14px;
-  font-weight: 800;
-  letter-spacing: -0.01em;
-}
-
-.rules-panel__cefr {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  padding: 3px 8px;
-  border-radius: var(--r-full);
-  background: var(--accent-soft);
-  color: var(--accent-2);
-  font-weight: 700;
-  letter-spacing: 0.04em;
-}
-
-.rules-panel__desc {
-  font-size: 12.5px;
-  color: var(--text-2);
+  gap: var(--s-2);
   margin-bottom: var(--s-4);
-  line-height: 1.55;
 }
-
-.rules-panel__list {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.rules-panel__list li {
-  position: relative;
-  padding-left: 18px;
-  margin-bottom: var(--s-2);
+.feedback-box__line {
   font-size: 12.5px;
   color: var(--text-2);
   line-height: 1.5;
 }
-
-.rules-panel__list li:last-child {
-  margin-bottom: 0;
-}
-
-.rules-panel__list li::before {
-  content: "▸";
-  position: absolute;
-  left: 0;
-  top: 0;
-  color: var(--accent-2);
+.feedback-box__line--strong {
+  color: #f87171;
   font-weight: 700;
+  font-size: 13px;
+}
+.feedback-box__line--muted {
+  color: var(--text-4);
+  font-size: 11.5px;
+  font-style: italic;
 }
 
-/* ------------------------------------------------------------
-   5. HEADER — botón "volver a verbos"
-   ------------------------------------------------------------ */
-.grammar-back {
-  text-decoration: none;
-}
-
-.grammar-back:hover .brand__name {
-  color: var(--accent-2);
-}
-
-/* ------------------------------------------------------------
-   6. BADGE DE TIEMPO EN LA CARA TRASERA
-   ------------------------------------------------------------ */
-.mini-tense {
-  display: inline-block;
-  padding: 3px 8px;
-  border-radius: var(--r-full);
-  background: var(--accent-soft);
-  color: var(--accent-2);
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  margin-bottom: var(--s-3);
-}
+/* ---------- Header ---------- */
+.grammar-back { text-decoration: none; }
+.grammar-back:hover .brand__name { color: var(--accent-2); }
