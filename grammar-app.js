@@ -1,11 +1,10 @@
 /* ============================================================
    IRREGULARS — grammar-app.js
-   Motor de la página de gramática. Extiende IrregularsApp.
+   Motor de grammar. Extiende IrregularsApp.
    ------------------------------------------------------------
-   - Navegación: sección → dificultad → nivel
-   - Panel de reglas dinámico
-   - Override de buildExercisePool, loadCurrentCard, checkAnswer
-   - Stats separadas de verbos (clave distinta en localStorage)
+   - Genera ejercicios bajo demanda
+   - Cachea por combinación
+   - Feedback detallado al fallar
    ============================================================ */
 
 class GrammarApp extends IrregularsApp {
@@ -15,70 +14,75 @@ class GrammarApp extends IrregularsApp {
     this.section    = "tenses";
     this.difficulty = "easy";
     this.level      = 1;
-
-    // Pool cacheado por combinación
-    this.poolCache = {};
+    this.includeAux = true;   // chip "Con auxiliares" por defecto
+    this.poolCache  = {};
   }
 
-  /* ----------------------------------------------------------
-     INIT
-     ---------------------------------------------------------- */
   init() {
-    // Antes de llamar al padre, forzamos la clave de stats de gramática
     this._statsKey = "irregulars_grammar_stats_v1";
-
     super.init();
-
     this.bindGrammarEvents();
     this.setSection("tenses");
-
     console.log("[GRAMMAR] GrammarApp iniciada");
   }
 
-  /* ----------------------------------------------------------
-     Sobrescribimos cacheDom para incluir IDs de grammar
-     ---------------------------------------------------------- */
   cacheDom() {
     super.cacheDom();
-
-    const extraIds = [
+    const extra = [
       "selected-difficulty-label", "selected-level-label",
       "difficulty-grid", "level-chips", "section-cards",
       "rules-title", "rules-cefr", "rules-desc", "rules-list",
+      "aux-mode-btn",
       "prog-easy", "bar-easy",
       "prog-medium", "bar-medium",
       "prog-hard", "bar-hard",
-      "prog-expert", "bar-expert"
+      "prog-expert", "bar-expert",
+      "feedback-your-answer", "feedback-explanation",
+      "feedback-example", "feedback-time", "feedback-cefr", "feedback-level"
     ];
-    extraIds.forEach((id) => { this.$[id] = document.getElementById(id); });
+    extra.forEach((id) => { this.$[id] = document.getElementById(id); });
   }
 
   /* ----------------------------------------------------------
-     Delegación específica de grammar
+     EVENTOS
      ---------------------------------------------------------- */
   bindGrammarEvents() {
     document.addEventListener("click", (e) => {
       const t = e.target.closest("button");
       if (!t) return;
 
-      // Sección
       if (t.classList.contains("section-card")) {
         this.setSection(t.dataset.section);
         return;
       }
-
-      // Dificultad
       if (t.classList.contains("difficulty-tile")) {
         this.setDifficulty(t.dataset.diff);
         return;
       }
-
-      // Nivel
       if (t.classList.contains("level-btn")) {
         this.setLevel(Number(t.dataset.level));
         return;
       }
+      if (t.id === "aux-mode-btn") {
+        this.toggleAuxMode();
+        return;
+      }
     });
+  }
+
+  toggleAuxMode() {
+    this.includeAux = !this.includeAux;
+    const btn = this.$["aux-mode-btn"];
+    if (btn) {
+      btn.textContent = this.includeAux ? "Con auxiliares" : "Solo verbo";
+      btn.classList.toggle("is-active", this.includeAux);
+    }
+    this.poolCache = {}; // invalidar caché al cambiar de modo
+    this.showToast(
+      this.includeAux ? "Modo: Con auxiliares" : "Modo: Solo verbo",
+      "is-info",
+      1500
+    );
   }
 
   /* ----------------------------------------------------------
@@ -93,9 +97,7 @@ class GrammarApp extends IrregularsApp {
     });
 
     const diffs = this.getAvailableDifficulties();
-    if (diffs.length) {
-      this.setDifficulty(diffs[0]);
-    }
+    if (diffs.length) this.setDifficulty(diffs[0]);
   }
 
   getAvailableDifficulties() {
@@ -115,11 +117,8 @@ class GrammarApp extends IrregularsApp {
     if (!sec || !sec[difficulty]) return;
     this.difficulty = difficulty;
 
-    // Reset nivel si el actual no existe en esta dificultad
     const levels = sec[difficulty].levels;
-    if (!levels[this.level]) {
-      this.level = Number(Object.keys(levels)[0]);
-    }
+    if (!levels[this.level]) this.level = Number(Object.keys(levels)[0]);
 
     this.renderDifficultyGrid();
     this.renderLevelChips();
@@ -135,7 +134,6 @@ class GrammarApp extends IrregularsApp {
   renderDifficultyGrid() {
     const grid = this.$["difficulty-grid"];
     if (!grid) return;
-
     const sec = GRAMMAR_TOPICS[this.section];
     const diffs = this.getAvailableDifficulties();
 
@@ -162,7 +160,6 @@ class GrammarApp extends IrregularsApp {
     if (!levels[level]) return;
 
     this.level = level;
-
     document.querySelectorAll(".level-btn").forEach((b) => {
       b.classList.toggle("is-active", Number(b.dataset.level) === level);
     });
@@ -176,7 +173,6 @@ class GrammarApp extends IrregularsApp {
   renderLevelChips() {
     const box = this.$["level-chips"];
     if (!box) return;
-
     const sec = GRAMMAR_TOPICS[this.section];
     const levels = sec[this.difficulty].levels;
     const keys = Object.keys(levels);
@@ -220,22 +216,39 @@ class GrammarApp extends IrregularsApp {
   }
 
   /* ----------------------------------------------------------
-     MOTOR DE SESIÓN
+     POOL — generación bajo demanda + caché
      ---------------------------------------------------------- */
   buildExercisePool() {
-    const cacheKey = this.section + "|" + this.difficulty + "|" + this.level;
+    const cacheKey = this.section + "|" + this.difficulty + "|" + this.level + "|" + this.includeAux;
 
     if (this.poolCache[cacheKey]) {
       return this.poolCache[cacheKey].slice();
     }
 
-    const secData = (GRAMMAR_EXERCISES[this.section] || {})[this.difficulty] || {};
-    const pool = secData[this.level] || [];
+    if (!window.GRAMMAR_GENERATOR) {
+      console.error("[GRAMMAR] GRAMMAR_GENERATOR no disponible");
+      return [];
+    }
 
-    this.poolCache[cacheKey] = pool;
-    return pool.slice();
+    const pool = window.GRAMMAR_GENERATOR.generateForTopic(
+      this.section, this.difficulty, this.level, 187
+    );
+
+    // Filtrar por modo auxiliares si está desactivado
+    let filtered = pool;
+    if (!this.includeAux) {
+      filtered = pool.filter((ex) => !ex.hasAuxiliary);
+      if (filtered.length < 50) filtered = pool; // fallback si hay muy pocos
+    }
+
+    this.poolCache[cacheKey] = filtered;
+    console.log("[GRAMMAR] Generados " + pool.length + " ejercicios (" + filtered.length + " filtrados) para " + cacheKey);
+    return filtered.slice();
   }
 
+  /* ----------------------------------------------------------
+     SESIÓN
+     ---------------------------------------------------------- */
   startSession() {
     const pool = this.buildExercisePool();
     if (pool.length === 0) {
@@ -243,13 +256,10 @@ class GrammarApp extends IrregularsApp {
       return;
     }
 
-    // Barajar el pool para que cada sesión sea distinta
     const shuffled = pool.slice();
     for (let i = shuffled.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
-      const tmp = shuffled[i];
-      shuffled[i] = shuffled[j];
-      shuffled[j] = tmp;
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
     }
 
     const limited = this.limit > 0 ? shuffled.slice(0, this.limit) : shuffled;
@@ -267,7 +277,7 @@ class GrammarApp extends IrregularsApp {
   }
 
   /* ----------------------------------------------------------
-     CARGA DE TARJETA
+     TARJETA — CARGA
      ---------------------------------------------------------- */
   loadCurrentCard() {
     if (this.currentIndex >= this.exercises.length) {
@@ -282,23 +292,22 @@ class GrammarApp extends IrregularsApp {
     const card = document.getElementById("flashcard");
     if (card) card.classList.remove("is-flipped");
 
-    // Badge de tipo
+    // Badge: sin pista del tiempo en nivel 3-4
     const badge = document.getElementById("card-type-badge");
     if (badge) {
-      const label = ex.tenseLabel || ex.badge || "Gramática";
-      badge.textContent = label;
-      badge.classList.toggle("is-participle", ex.type === "conditional");
+      if (this.level <= 2 && ex.tenseLabel) {
+        badge.textContent = ex.tenseLabel;
+      } else {
+        badge.textContent = "Gramática";
+      }
     }
 
-    // Hint superior (dificultad + nivel)
     const hint = document.getElementById("card-verb-hint");
     if (hint) hint.textContent = "Nivel " + this.level;
 
-    // Frase
     const sent = document.getElementById("card-sentence");
     if (sent) sent.textContent = ex.sentence;
 
-    // Input
     const input = document.getElementById("answer-input");
     if (input) {
       input.value = "";
@@ -306,7 +315,6 @@ class GrammarApp extends IrregularsApp {
       setTimeout(() => input.focus(), 80);
     }
 
-    // Progreso
     const total = this.exercises.length;
     const counter = document.getElementById("session-counter");
     if (counter) counter.textContent = (this.currentIndex + 1) + " / " + total;
@@ -333,8 +341,6 @@ class GrammarApp extends IrregularsApp {
     }
 
     this.stats.totalAttempted += 1;
-
-    // Mapeamos dificultad a priorityStats (easy/medium/hard/expert)
     const pKey = this.difficulty;
     if (!this.stats.priorityStats[pKey]) {
       this.stats.priorityStats[pKey] = { correct: 0, total: 0 };
@@ -358,42 +364,13 @@ class GrammarApp extends IrregularsApp {
       return;
     }
 
-    // FALLO
+    /* FALLO */
     this.stats.totalIncorrect += 1;
     this.stats.streak = 0;
     this.sessionScore.incorrect += 1;
     this.saveStats();
 
-    const ex = this.currentExercise;
-    const sec = GRAMMAR_TOPICS[this.section];
-    const diff = sec[this.difficulty];
-
-    // Respuesta correcta
-    const fb = document.getElementById("feedback-correct-word");
-    if (fb) fb.textContent = "Respuesta: " + (ex.answer || "").toUpperCase();
-
-    // Título (nombre de la sección)
-    const t = document.getElementById("mini-verb-title");
-    if (t) t.textContent = (sec.label || "").toUpperCase();
-
-    // Subtítulo (badge del tema)
-    const es = document.getElementById("mini-verb-es");
-    if (es) es.textContent = (diff.badge || diff.label || "");
-
-    // Fila 1: Tiempo / etiqueta del tipo
-    const b = document.getElementById("mini-base");
-    if (b) b.textContent = ex.tenseLabel || "—";
-
-    // Fila 2: Respuesta correcta
-    const p = document.getElementById("mini-past");
-    if (p) p.textContent = ex.answer || "—";
-
-    // Fila 3: Primera regla del tema
-    const pa = document.getElementById("mini-part");
-    if (pa) {
-      const rules = ex.rules || [];
-      pa.textContent = rules.length ? rules[0] : "—";
-    }
+    this.fillFeedback(input.value, this.currentExercise);
 
     this.isFlipped = true;
     const card = document.getElementById("flashcard");
@@ -401,7 +378,107 @@ class GrammarApp extends IrregularsApp {
   }
 
   /* ----------------------------------------------------------
-     STATS — clave separada de verbos
+     FEEDBACK DETALLADO
+     ---------------------------------------------------------- */
+  fillFeedback(userAnswer, ex) {
+    const fb = document.getElementById("feedback-correct-word");
+    if (fb) fb.textContent = "Respuesta: " + (ex.answer || "").toUpperCase();
+
+    // Tu respuesta
+    const yours = document.getElementById("feedback-your-answer");
+    if (yours) yours.textContent = "Tú escribiste: " + (userAnswer || "(vacío)");
+
+    // Tiempo
+    const timeEl = document.getElementById("feedback-time");
+    if (timeEl) timeEl.textContent = ex.tenseLabel || "—";
+
+    // CEFR
+    const cefrEl = document.getElementById("feedback-cefr");
+    if (cefrEl) cefrEl.textContent = ex.cefr || "—";
+
+    // Nivel
+    const lvlEl = document.getElementById("feedback-level");
+    if (lvlEl) lvlEl.textContent = "Nivel " + (ex.level || "—");
+
+    // Explicación del error
+    const expl = document.getElementById("feedback-explanation");
+    if (expl) {
+      expl.textContent = this.buildErrorExplanation(userAnswer, ex);
+    }
+
+    // Ejemplo similar
+    const example = document.getElementById("feedback-example");
+    if (example) {
+      example.textContent = this.buildExample(ex);
+    }
+
+    // Actualizar panel de reglas con las reglas del tema
+    const list = this.$["rules-list"];
+    if (list && ex.rules) {
+      list.innerHTML = ex.rules.map((r) => "<li>" + r + "</li>").join("");
+    }
+
+    // Título y subtítulo
+    const t = document.getElementById("mini-verb-title");
+    if (t) t.textContent = (ex.verbBase || "").toUpperCase();
+    const es = document.getElementById("mini-verb-es");
+    if (es) es.textContent = ex.tenseLabel || "";
+
+    // Mini-filas
+    const b = document.getElementById("mini-base");
+    if (b) b.textContent = ex.verbBase || "—";
+    const p = document.getElementById("mini-past");
+    if (p) p.textContent = ex.answer || "—";
+    const pa = document.getElementById("mini-part");
+    if (pa) pa.textContent = (ex.rules && ex.rules[0]) ? ex.rules[0] : "—";
+  }
+
+  buildErrorExplanation(userAnswer, ex) {
+    const norm = (s) => this.normalize(s);
+    const ua = norm(userAnswer);
+    const correct = norm(ex.answer);
+
+    // Comparaciones básicas
+    if (ua === norm(ex.verbBase)) {
+      return 'Escribiste el infinitivo "' + ex.verbBase + '". Necesitas la forma conjugada: "' + ex.answer + '".';
+    }
+    if (ua === norm(ex.verbPast) && norm(ex.answer) === norm(ex.verbParticiple)) {
+      // coincide pasado y participio, no se puede discriminar
+      return 'La respuesta correcta es "' + ex.answer + '". Revisa la forma verbal.';
+    }
+    if (ua === norm(ex.verbPast) && norm(ex.answer) !== norm(ex.verbPast)) {
+      return 'Escribiste el pasado simple ("' + ex.verbPast + '"), pero aquí va otra forma: "' + ex.answer + '".';
+    }
+    if (ua === norm(ex.verbParticiple) && norm(ex.answer) !== norm(ex.verbParticiple)) {
+      return 'Escribiste el participio ("' + ex.verbParticiple + '"), pero aquí va: "' + ex.answer + '".';
+    }
+    if (ua === norm(ex.verbIng) && norm(ex.answer) !== norm(ex.verbIng)) {
+      return 'Escribiste la forma -ing ("' + ex.verbIng + '"), pero aquí va: "' + ex.answer + '".';
+    }
+    if (ua.indexOf(" ") === -1 && correct.indexOf(" ") !== -1) {
+      return 'Falta el auxiliar. La respuesta completa es "' + ex.answer + '".';
+    }
+    if (ex.isNegative && ua.indexOf("not") === -1 && ua.indexOf("n't") === -1) {
+      return 'Falta la negación. La respuesta correcta es "' + ex.answer + '".';
+    }
+    if (ex.isQuestion && ua.indexOf(norm(ex.auxUsed || "x")) === -1) {
+      return 'Falta el auxiliar de pregunta ("' + (ex.auxUsed || "") + '"). Respuesta: "' + ex.answer + '".';
+    }
+    return 'La respuesta correcta es "' + ex.answer + '". Revisa la forma verbal y el auxiliar.';
+  }
+
+  buildExample(ex) {
+    if (!ex.verbBase) return "";
+    var v = ex.verbBase;
+    var time = ex.tenseLabel || "";
+    if (ex.isNegative) return "Ejemplo negativo: She doesn't " + v + " every day.";
+    if (ex.isQuestion) return "Ejemplo: Does she " + v + " every day?";
+    if (ex.hasAuxiliary) return "Ejemplo similar con el mismo tiempo.";
+    return "Ejemplo: I " + (ex.answer || v) + " yesterday.";
+  }
+
+  /* ----------------------------------------------------------
+     STATS — clave separada
      ---------------------------------------------------------- */
   loadStats() {
     const KEY = "irregulars_grammar_stats_v1";
@@ -410,7 +487,6 @@ class GrammarApp extends IrregularsApp {
       if (!raw) return this.defaultStats();
       const parsed = JSON.parse(raw);
       const base = this.defaultStats();
-
       return {
         totalAttempted: parsed.totalAttempted || 0,
         totalCorrect:   parsed.totalCorrect   || 0,
@@ -456,18 +532,13 @@ class GrammarApp extends IrregularsApp {
     this.showToast("Estadísticas reiniciadas", "is-neutral");
   }
 
-  /* ----------------------------------------------------------
-     STATS UI — adaptada a dificultades (no prioridades)
-     ---------------------------------------------------------- */
   updateStatsUI() {
     const s = this.stats;
     if (!s) return;
-
     const set = (id, val) => {
       const el = document.getElementById(id);
       if (el) el.textContent = val;
     };
-
     set("stat-total", s.totalAttempted);
     const acc = s.totalAttempted > 0
       ? Math.round((s.totalCorrect / s.totalAttempted) * 100)
@@ -478,9 +549,7 @@ class GrammarApp extends IrregularsApp {
 
     ["easy", "medium", "hard", "expert"].forEach((diff) => {
       const data = s.priorityStats[diff] || { correct: 0, total: 0 };
-      const pct = data.total > 0
-        ? Math.round((data.correct / data.total) * 100)
-        : 0;
+      const pct = data.total > 0 ? Math.round((data.correct / data.total) * 100) : 0;
       const prog = document.getElementById("prog-" + diff);
       const bar  = document.getElementById("bar-" + diff);
       if (prog) prog.textContent = pct + "%";
@@ -488,9 +557,6 @@ class GrammarApp extends IrregularsApp {
     });
   }
 
-  /* ----------------------------------------------------------
-     NAVEGACIÓN — override para que "inicio" vuelva a config
-     ---------------------------------------------------------- */
   goHome() {
     this.showView("view-home");
     this.updateStatsUI();
@@ -502,7 +568,4 @@ class GrammarApp extends IrregularsApp {
   }
 }
 
-/* ------------------------------------------------------------
-   Instancia global
-   ------------------------------------------------------------ */
 window.__grammarApp = new GrammarApp();
